@@ -1,6 +1,7 @@
 package nhl
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -15,27 +16,27 @@ type Nhl struct {
 	Games map[string][]*Game
 }
 
-func New() (*Nhl, error) {
+func New(ctx context.Context) (*Nhl, error) {
 	n := &Nhl{
 		Games: make(map[string][]*Game),
 		Teams: make(map[int]*Team),
 	}
 
-	if err := n.UpdateTeams(); err != nil {
+	if err := n.UpdateTeams(ctx); err != nil {
 		return nil, err
 	}
 
 	today := time.Now().Format("2006-01-02")
 
-	if err := n.UpdateGames(today); err != nil {
+	if err := n.UpdateGames(ctx, today); err != nil {
 		return nil, fmt.Errorf("failed to get today's games: %w", err)
 	}
 
 	return n, nil
 }
 
-func (n *Nhl) UpdateTeams() error {
-	teamList, err := GetTeams()
+func (n *Nhl) UpdateTeams(ctx context.Context) error {
+	teamList, err := GetTeams(ctx)
 	if err != nil {
 		return err
 	}
@@ -45,8 +46,8 @@ func (n *Nhl) UpdateTeams() error {
 	return nil
 }
 
-func (n *Nhl) UpdateGames(dateStr string) error {
-	games, err := getGames(dateStr)
+func (n *Nhl) UpdateGames(ctx context.Context, dateStr string) error {
+	games, err := getGames(ctx, dateStr)
 	if err != nil {
 		return err
 	}
@@ -56,10 +57,10 @@ func (n *Nhl) UpdateGames(dateStr string) error {
 	return nil
 }
 
-func (n *Nhl) nameFromID(id int) (string, error) {
+func (n *Nhl) nameFromID(ctx context.Context, id int) (string, error) {
 	t, ok := n.Teams[id]
 	if !ok {
-		if err := n.UpdateTeams(); err != nil {
+		if err := n.UpdateTeams(ctx); err != nil {
 			return "", err
 		}
 	}
@@ -67,28 +68,28 @@ func (n *Nhl) nameFromID(id int) (string, error) {
 	return t.Name, nil
 }
 
-func (n *Nhl) PrintTodaySchedule(out io.Writer) error {
-	return n.PrintSchedule(time.Now().Format("2006-01-02"), out)
+func (n *Nhl) PrintTodaySchedule(ctx context.Context, out io.Writer) error {
+	return n.PrintSchedule(ctx, time.Now().Format("2006-01-02"), out)
 }
 
-func (n *Nhl) PrintSchedule(dateStr string, out io.Writer) error {
+func (n *Nhl) PrintSchedule(ctx context.Context, dateStr string, out io.Writer) error {
 	if err := validateDateStr(dateStr); err != nil {
 		return err
 	}
 
 	games, ok := n.Games[dateStr]
 	if !ok {
-		if err := n.UpdateGames(dateStr); err != nil {
+		if err := n.UpdateGames(ctx, dateStr); err != nil {
 			return err
 		}
 	}
 
 	for _, game := range games {
-		away, err := n.nameFromID(game.Teams.Away.Team.Id)
+		away, err := n.nameFromID(ctx, game.Teams.Away.Team.Id)
 		if err != nil {
 			return err
 		}
-		home, err := n.nameFromID(game.Teams.Home.Team.Id)
+		home, err := n.nameFromID(ctx, game.Teams.Home.Team.Id)
 		if err != nil {
 			return err
 		}

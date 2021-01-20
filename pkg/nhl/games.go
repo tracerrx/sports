@@ -1,6 +1,7 @@
 package nhl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -42,14 +43,21 @@ func (g *Game) setGameTime() error {
 	return nil
 }
 
-func getGames(dateStr string) ([]*Game, error) {
+func getGames(ctx context.Context, dateStr string) ([]*Game, error) {
 	if err := validateDateStr(dateStr); err != nil {
 		return nil, err
 	}
 
 	uri := fmt.Sprintf("%s/schedule?date=%s&expand=schedule.linescore", BaseURL, dateStr)
+	req, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+	client := http.DefaultClient
 
-	resp, err := http.Get(uri)
+	req = req.WithContext(ctx)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get games for '%s': %w", dateStr, err)
 	}

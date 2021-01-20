@@ -39,6 +39,7 @@ func newRootCmd(args *rootArgs) *cobra.Command {
 
 	*/
 	rootCmd.AddCommand(newNhlCmd(args))
+	rootCmd.AddCommand(newServerCmd(args))
 
 	return rootCmd
 }

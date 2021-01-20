@@ -21,7 +21,7 @@ message GetTeamsResponse {
     repeated Team teams = 1;
 }
 
-message GetTeamByName{
+message GetTeamByNameRequest{
     string name = 1;
 }
 message GetTeamByNameResponse{
@@ -35,7 +35,7 @@ message GetGameScoreboardsResponse {
     repeated GameScoreboard scoreboards = 1;
 }
 
-service Sports {
+service Nhl {
     rpc GetTeams(GetTeamsRequest) returns (GetTeamsResponse);
     rpc GetTeamByName(GetTeamByNameRequest) returns (GetTeamByNameResponse);
     rpc GetGameScoreboards(GetGameScoreboardsRequest) returns (GetGameScoreboardsResponse);

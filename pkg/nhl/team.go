@@ -1,6 +1,7 @@
 package nhl
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,10 +42,17 @@ func (t *Team) setGameTimes() error {
 	return nil
 }
 
-func GetTeams() (Teams, error) {
+func GetTeams(ctx context.Context) (Teams, error) {
 	uri := fmt.Sprintf("%s/teams?expand=team.stats,team.schedule.previous,team.schedule.next", BaseURL)
+	req, err := http.NewRequest("GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	resp, err := http.Get(uri)
+	req = req.WithContext(ctx)
+
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list teams: %w", err)
 	}
