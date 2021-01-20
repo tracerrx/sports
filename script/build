@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOT=$(git rev-parse --show-toplevel)
+cd "${ROOT}"
+
+#image="golang:1.16-rc-alpine"
+image="gokvmbuilder"
+
+cd "${ROOT}"
+
+if uname -m | grep x86_64; then
+  echo "--> Building for x86_64"
+  CGO_ENABLED=1 go build -mod=vendor -o gokvm.darwin_x86 ./cmd/gokvm/
+fi
+
+if uname -m | grep arm64; then
+  echo "--> Building for arm64"
+  CGO_ENABLED=1 go build -mod=vendor -o gokvm.darwin_arm ./cmd/gokvm/
+fi
+
+exit
+
+docker build -f Dockerfile.build -t "${image}" .
+docker run -t --rm \
+  -u $(id -u):$(id -g) \
+  -v ${ROOT}:/src \
+  -w /src \
+  -e CGO_ENABLED=1 \
+  -e GOOS=darwin \
+  -e GOARCH=arm64 \
+  -e GOCACHE="/src/.cache" \
+  ${image} \
+  go build -mod=vendor -o gokvm.osx ./cmd/gokvm/
