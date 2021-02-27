@@ -27,6 +27,7 @@ import (
 	"github.com/robbydyer/sports/pkg/sportboard"
 	"github.com/robbydyer/sports/pkg/sportsmatrix"
 	"github.com/robbydyer/sports/pkg/sysboard"
+	"github.com/robbydyer/sports/pkg/weather"
 )
 
 const defaultConfigFile = "/etc/sportsmatrix.conf"
@@ -187,6 +188,13 @@ func (r *rootArgs) setConfigDefaults() {
 		}
 	}
 	r.config.SysConfig.SetDefaults()
+
+	if r.config.WeatherConfig == nil {
+		r.config.WeatherConfig = &weather.Config{
+			Enabled: atomic.NewBool(false),
+		}
+	}
+	r.config.WeatherConfig.SetDefaults()
 }
 
 func (r *rootArgs) getRGBMatrix(logger *zap.Logger) (rgb.Matrix, error) {
@@ -283,6 +291,14 @@ func (r *rootArgs) getBoards(ctx context.Context, logger *zap.Logger) ([]board.B
 		b, err := sysboard.New(logger, r.config.SysConfig)
 		if err != nil {
 			return boards, err
+		}
+		boards = append(boards, b)
+	}
+
+	if r.config.WeatherConfig != nil {
+		b, err := weather.New(r.config.WeatherConfig, logger, weather.WithWeatherDataGetter(weather.GetWeatherFromAsset))
+		if err != nil {
+			return nil, err
 		}
 		boards = append(boards, b)
 	}

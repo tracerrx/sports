@@ -50,6 +50,12 @@ func New(key string, sourceLogo image.Image, targetDirectory string, matrixBound
 	}
 }
 
+func DefaultConfig() *Config {
+	return &Config{
+		Pt: &Pt{},
+	}
+}
+
 // Key returns the key name of the logo
 func (l *Logo) Key() string {
 	return l.key

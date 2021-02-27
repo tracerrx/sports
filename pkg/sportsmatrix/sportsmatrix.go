@@ -270,6 +270,7 @@ func (s *SportsMatrix) Serve(ctx context.Context) error {
 
 		if s.allDisabled() {
 			clearer.Do(func() {
+				s.log.Info("all boards are disabled")
 				for _, canvas := range s.canvases {
 					if err := canvas.Clear(); err != nil {
 						s.log.Error("failed to clear matrix when all boards were disabled", zap.Error(err))

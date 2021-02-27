@@ -24,7 +24,7 @@ type Enabler interface {
 type Board interface {
 	Enabler
 	Name() string
-	Render(ctx context.Context, canvases Canvas) error
+	Render(ctx context.Context, canvas Canvas) error
 	GetHTTPHandlers() ([]*HTTPHandler, error)
 }
 
