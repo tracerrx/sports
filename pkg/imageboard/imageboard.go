@@ -127,7 +127,7 @@ func New(config *Config, logger *zap.Logger) (*ImageBoard, error) {
 	i.rpcServer = pb.NewImageBoardServer(svr,
 		twirp.WithServerPathPrefix(""),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(i, i.log),
+			twirphelpers.GetDefaultHooks(i.Name(), i.log),
 		),
 	)
 

@@ -5,16 +5,10 @@ import (
 
 	"github.com/twitchtv/twirp"
 	"go.uber.org/zap"
-
-	"github.com/robbydyer/sports/pkg/board"
 )
 
 // GetDefaultHooks returns default custom twirp.ServerHooks
-func GetDefaultHooks(board board.Board, logger *zap.Logger) *twirp.ServerHooks {
-	boardName := ""
-	if board != nil {
-		boardName = board.Name()
-	}
+func GetDefaultHooks(boardName string, logger *zap.Logger) *twirp.ServerHooks {
 	return &twirp.ServerHooks{
 		RequestRouted: func(ctx context.Context) (context.Context, error) {
 			method, _ := twirp.MethodName(ctx)

@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/robbydyer/sports/internal/config"
+	"github.com/robbydyer/sports/pkg/basicboard"
 	"github.com/robbydyer/sports/pkg/board"
 	"github.com/robbydyer/sports/pkg/calendarboard"
 	"github.com/robbydyer/sports/pkg/clock"
@@ -26,7 +27,7 @@ import (
 	"github.com/robbydyer/sports/pkg/nhl"
 	"github.com/robbydyer/sports/pkg/openweather"
 	"github.com/robbydyer/sports/pkg/pga"
-	"github.com/robbydyer/sports/pkg/racingboard"
+	"github.com/robbydyer/sports/pkg/renderers/racing"
 	rgb "github.com/robbydyer/sports/pkg/rgbmatrix-rpi"
 	"github.com/robbydyer/sports/pkg/sportboard"
 	"github.com/robbydyer/sports/pkg/sportsmatrix"
@@ -324,16 +325,12 @@ func (r *rootArgs) setConfigDefaults() {
 	r.config.WeatherConfig.SetDefaults()
 
 	if r.config.F1Config == nil {
-		r.config.F1Config = &racingboard.Config{
-			Enabled: atomic.NewBool(false),
-		}
+		r.config.F1Config = &racing.Config{}
 	}
 	r.config.F1Config.SetDefaults()
 
 	if r.config.IRLConfig == nil {
-		r.config.IRLConfig = &racingboard.Config{
-			Enabled: atomic.NewBool(false),
-		}
+		r.config.IRLConfig = &racing.Config{}
 	}
 	r.config.IRLConfig.SetDefaults()
 
@@ -700,19 +697,26 @@ func (r *rootArgs) getBoards(ctx context.Context, logger *zap.Logger) ([]board.B
 		if err != nil {
 			return nil, err
 		}
-		b, err := racingboard.New(api, logger, r.config.F1Config)
+		renderer, err := racing.New(api, r.config.F1Config, logger)
+		if err != nil {
+			return nil, err
+		}
+		b, err := basicboard.New(renderer, logger)
 		if err != nil {
 			return nil, err
 		}
 		boards = append(boards, b)
 	}
-
 	if r.config.IRLConfig != nil {
 		api, err := espnracing.New(&espnracing.IRL{}, logger)
 		if err != nil {
 			return nil, err
 		}
-		b, err := racingboard.New(api, logger, r.config.IRLConfig)
+		renderer, err := racing.New(api, r.config.IRLConfig, logger)
+		if err != nil {
+			return nil, err
+		}
+		b, err := basicboard.New(renderer, logger)
 		if err != nil {
 			return nil, err
 		}

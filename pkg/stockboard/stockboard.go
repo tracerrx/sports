@@ -158,7 +158,7 @@ func New(api API, config *Config, log *zap.Logger) (*StockBoard, error) {
 	s.rpcServer = pb.NewBasicBoardServer(svr,
 		twirp.WithServerPathPrefix("/stocks"),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.Name(), s.log),
 		),
 	)
 

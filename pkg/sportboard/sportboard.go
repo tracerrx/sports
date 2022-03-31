@@ -277,7 +277,7 @@ func New(ctx context.Context, api API, bounds image.Rectangle, logger *zap.Logge
 	s.rpcServer = pb.NewSportServer(svr,
 		twirp.WithServerPathPrefix(prfx),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.api.HTTPPathPrefix(), s.log),
 		),
 	)
 

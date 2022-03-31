@@ -154,7 +154,7 @@ func New(api API, config *Config, log *zap.Logger) (*WeatherBoard, error) {
 	s.rpcServer = pb.NewWeatherBoardServer(svr,
 		twirp.WithServerPathPrefix(""),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.Name(), s.log),
 		),
 	)
 

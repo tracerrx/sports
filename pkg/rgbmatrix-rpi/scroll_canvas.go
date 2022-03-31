@@ -86,6 +86,11 @@ func NewScrollCanvas(m Matrix, logger *zap.Logger, opts ...ScrollCanvasOption) (
 	return c, nil
 }
 
+func (c *ScrollCanvas) Clone() board.Canvas {
+	newC := *c
+	return &newC
+}
+
 func (c *ScrollCanvas) Width() int {
 	return c.w
 }

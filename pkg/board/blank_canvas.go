@@ -38,6 +38,14 @@ func (i *BlankCanvas) Name() string {
 	return "BlankCanvas"
 }
 
+// Clone ...
+func (i *BlankCanvas) Clone() Canvas {
+	//nolint:govet
+	newC := *i
+	newC.Unlock()
+	return &newC
+}
+
 // Scrollable ...
 func (i *BlankCanvas) Scrollable() bool {
 	return false

@@ -78,7 +78,7 @@ func New(logger *zap.Logger, config *Config) (*SysBoard, error) {
 	s.rpcServer = pb.NewBasicBoardServer(svr,
 		twirp.WithServerPathPrefix("/sys"),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.Name(), s.log),
 		),
 	)
 

@@ -165,7 +165,7 @@ func New(api API, logger *zap.Logger, config *Config) (*RacingBoard, error) {
 	s.rpcServer = pb.NewRacingServer(svr,
 		twirp.WithServerPathPrefix(prfx),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.api.HTTPPathPrefix(), s.log),
 		),
 	)
 

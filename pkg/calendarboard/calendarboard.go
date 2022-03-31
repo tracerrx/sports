@@ -159,7 +159,7 @@ func New(api API, logger *zap.Logger, config *Config) (*CalendarBoard, error) {
 	s.rpcServer = pb.NewBasicBoardServer(svr,
 		twirp.WithServerPathPrefix(prfx),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.api.HTTPPathPrefix(), s.log),
 		),
 	)
 

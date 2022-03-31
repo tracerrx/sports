@@ -11,6 +11,8 @@ import (
 
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
+
+	"github.com/robbydyer/sports/pkg/board"
 )
 
 // ImgCanvas is a board.Canvas type that just stores the state
@@ -49,6 +51,14 @@ func New(width int, height int, logger *zap.Logger) *ImgCanvas {
 // Name ...
 func (i *ImgCanvas) Name() string {
 	return "ImgCanvas"
+}
+
+// Clone ...
+func (i *ImgCanvas) Clone() board.Canvas {
+	//nolint:govet
+	newC := *i
+	newC.Unlock()
+	return &newC
 }
 
 // Scrollable ...

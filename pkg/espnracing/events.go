@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/robbydyer/sports/pkg/racingboard"
+	"github.com/robbydyer/sports/pkg/renderers/racing"
 )
 
 const baseURL = "http://site.api.espn.com/apis/site/v2/sports"
@@ -59,7 +59,7 @@ type Scoreboard struct {
 }
 
 // GetScheduledEvents ...
-func (a *API) GetScheduledEvents(ctx context.Context) ([]*racingboard.Event, error) {
+func (a *API) GetScheduledEvents(ctx context.Context) ([]*racing.Event, error) {
 	if a.schedule != nil {
 		return a.eventsFromSchedule(a.schedule)
 	}
@@ -73,12 +73,12 @@ func (a *API) GetScheduledEvents(ctx context.Context) ([]*racingboard.Event, err
 	return a.eventsFromSchedule(a.schedule)
 }
 
-func (a *API) eventsFromSchedule(sched *Scoreboard) ([]*racingboard.Event, error) {
+func (a *API) eventsFromSchedule(sched *Scoreboard) ([]*racing.Event, error) {
 	if sched == nil || sched.Events == nil {
 		return nil, nil
 	}
 
-	events := []*racingboard.Event{}
+	events := []*racing.Event{}
 	for _, e := range sched.Events {
 		eventDate, err := time.Parse("2006-01-02T15:04Z", e.Date)
 		if err != nil {
@@ -86,7 +86,7 @@ func (a *API) eventsFromSchedule(sched *Scoreboard) ([]*racingboard.Event, error
 		}
 
 		events = append(events,
-			&racingboard.Event{
+			&racing.Event{
 				Name: e.ShortName,
 				Date: eventDate,
 			},

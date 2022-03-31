@@ -210,7 +210,7 @@ func New(ctx context.Context, api API, config *Config, logger *zap.Logger, opts 
 	s.rpcServer = pb.NewBasicBoardServer(svr,
 		twirp.WithServerPathPrefix(prfx),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.api.HTTPPathPrefix(), s.log),
 		),
 	)
 

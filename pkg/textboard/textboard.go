@@ -171,7 +171,7 @@ func New(api API, config *Config, log *zap.Logger, opts ...OptionFunc) (*TextBoa
 	s.rpcServer = pb.NewBasicBoardServer(svr,
 		twirp.WithServerPathPrefix(prfx),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(s, s.log),
+			twirphelpers.GetDefaultHooks(s.api.HTTPPathPrefix(), s.log),
 		),
 	)
 

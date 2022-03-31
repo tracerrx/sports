@@ -47,6 +47,7 @@ type Canvas interface {
 	AlwaysRender() bool
 	SetWidth(int)
 	GetWidth() int
+	Clone() Canvas
 }
 
 // StateChangeNotifier is a func that an Enabler uses to notify when its

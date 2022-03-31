@@ -7,6 +7,7 @@ import (
 
 	"github.com/robbydyer/sports/pkg/board"
 	"github.com/robbydyer/sports/pkg/rgbmatrix-rpi"
+	"go.uber.org/zap"
 )
 
 // ScrollRender ...
@@ -32,7 +33,12 @@ func (b *BasicBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padd
 	if err != nil {
 		return nil, err
 	}
-	scrollCanvas.SetScrollSpeed(b.config.scrollDelay)
+	d := b.config.GetScrollDelay()
+	b.log.Debug("scrolling canvas",
+		zap.String("board", b.Name()),
+		zap.Duration("scroll delay", d),
+	)
+	scrollCanvas.SetScrollSpeed(d)
 	scrollCanvas.SetScrollDirection(rgbmatrix.RightToLeft)
 
 	renderedCanvases, err := b.renderer.Prepare(ctx, canvas)
@@ -79,7 +85,7 @@ func (b *BasicBoard) Render(ctx context.Context, canvas board.Canvas) error {
 		select {
 		case <-b.boardCtx.Done():
 			return context.Canceled
-		case <-time.After(b.config.boardDelay):
+		case <-time.After(b.config.GetBoardDelay()):
 		}
 	}
 

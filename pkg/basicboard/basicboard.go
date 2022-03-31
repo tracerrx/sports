@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/robfig/cron/v3"
 	"go.uber.org/zap"
@@ -12,8 +11,6 @@ import (
 	"github.com/robbydyer/sports/pkg/basicconfig"
 	"github.com/robbydyer/sports/pkg/board"
 	"github.com/robbydyer/sports/pkg/util"
-
-	pb "github.com/robbydyer/sports/internal/proto/basicboard"
 )
 
 // BasicBoard implements board.Board
@@ -21,16 +18,10 @@ type BasicBoard struct {
 	config              *basicconfig.Config
 	renderer            Renderer
 	log                 *zap.Logger
-	rpcServer           pb.TwirpServer
 	boardCtx            context.Context
 	boardCancel         context.CancelFunc
 	stateChangeNotifier board.StateChangeNotifier
 }
-
-// Todayer is a func that returns a string representing a date
-// that will be used for determining "Today's" games.
-// This is useful in testing what past days looked like
-type Todayer func() []time.Time
 
 // Renderer ...
 type Renderer interface {
@@ -38,6 +29,7 @@ type Renderer interface {
 	Config() *basicconfig.Config
 	HTTPPathPrefix() string
 	RPCHandler() (string, http.Handler)
+	SetBoard(*BasicBoard)
 }
 
 // New ...
@@ -46,6 +38,8 @@ func New(renderer Renderer, logger *zap.Logger) (*BasicBoard, error) {
 		renderer: renderer,
 		log:      logger,
 	}
+
+	renderer.SetBoard(b)
 
 	b.config = renderer.Config()
 
@@ -125,7 +119,7 @@ func (b *BasicBoard) Enable() bool {
 }
 
 // InBetween ...
-func (s *BasicBoard) InBetween() bool {
+func (b *BasicBoard) InBetween() bool {
 	return false
 }
 
@@ -138,6 +132,19 @@ func (b *BasicBoard) Disable() bool {
 		return true
 	}
 	return false
+}
+
+// Cancel ...
+func (b *BasicBoard) Cancel() {
+	if b.boardCancel != nil {
+		b.log.Info("canceling board",
+			zap.String("board", b.Name()),
+		)
+		b.boardCancel()
+		if b.stateChangeNotifier != nil {
+			b.stateChangeNotifier()
+		}
+	}
 }
 
 // SetStateChangeNotifier ...

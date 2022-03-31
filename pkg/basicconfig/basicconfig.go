@@ -3,12 +3,19 @@ package basicconfig
 import (
 	"time"
 
-	"github.com/robbydyer/sports/pkg/rgbmatrix-rpi"
 	"go.uber.org/atomic"
+
+	"github.com/robbydyer/sports/pkg/rgbmatrix-rpi"
 )
 
+var defaultBoardDelay = 10 * time.Second
+
+// Todayer is a func that returns a string representing a date
+// that will be used for determining "Today's" games.
+// This is useful in testing what past days looked like
 type Todayer func() []time.Time
 
+// Config ...
 type Config struct {
 	boardDelay         *time.Duration
 	scrollDelay        *time.Duration
@@ -22,6 +29,7 @@ type Config struct {
 	TightScrollPadding int          `json:"tightScrollPadding"`
 }
 
+// SetDefaults ...
 func (c *Config) SetDefaults() {
 	if c.Enabled == nil {
 		c.Enabled = atomic.NewBool(false)
@@ -40,11 +48,11 @@ func (c *Config) GetBoardDelay() time.Duration {
 	if c.BoardDelay != "" {
 		d, err := time.ParseDuration(c.BoardDelay)
 		if err != nil {
-			*c.boardDelay = 10 * time.Second
+			c.boardDelay = &defaultBoardDelay
 		}
-		*c.boardDelay = d
+		c.boardDelay = &d
 	} else {
-		*c.boardDelay = 10 * time.Second
+		c.boardDelay = &defaultBoardDelay
 	}
 
 	return *c.boardDelay
@@ -59,11 +67,11 @@ func (c *Config) GetScrollDelay() time.Duration {
 	if c.ScrollDelay != "" {
 		d, err := time.ParseDuration(c.ScrollDelay)
 		if err != nil {
-			*c.scrollDelay = rgbmatrix.DefaultScrollDelay
+			c.scrollDelay = &rgbmatrix.DefaultScrollDelay
 		}
-		*c.scrollDelay = d
+		c.scrollDelay = &d
 	} else {
-		*c.scrollDelay = rgbmatrix.DefaultScrollDelay
+		c.scrollDelay = &rgbmatrix.DefaultScrollDelay
 	}
 
 	return *c.scrollDelay

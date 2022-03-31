@@ -35,6 +35,11 @@ func (c *Canvas) Name() string {
 	return "RGB Canvas"
 }
 
+func (c *Canvas) Clone() board.Canvas {
+	newC := *c
+	return &newC
+}
+
 // Scrollable ...
 func (c *Canvas) Scrollable() bool {
 	return false

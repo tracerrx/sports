@@ -131,7 +131,7 @@ func (s *SportsMatrix) startHTTP() chan error {
 	twirpHandler := pb.NewSportsmatrixServer(svr,
 		twirp.WithServerPathPrefix(""),
 		twirp.ChainHooks(
-			twirphelpers.GetDefaultHooks(nil, s.log),
+			twirphelpers.GetDefaultHooks("sportsmatrix", s.log),
 		),
 	)
 	s.log.Info("register RPC Handler",
