@@ -18,6 +18,7 @@ import (
 
 	pb "github.com/robbydyer/sports/internal/proto/weatherboard"
 	"github.com/robbydyer/sports/pkg/board"
+	"github.com/robbydyer/sports/pkg/forecast"
 	"github.com/robbydyer/sports/pkg/logo"
 	"github.com/robbydyer/sports/pkg/rgbmatrix-rpi"
 	"github.com/robbydyer/sports/pkg/rgbrender"
@@ -79,9 +80,9 @@ type Forecast struct {
 
 // API interface for getting weather data
 type API interface {
-	CurrentForecast(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metricUnits bool) (*Forecast, error)
-	DailyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metricUnits bool) ([]*Forecast, error)
-	HourlyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metricUnits bool) ([]*Forecast, error)
+	CurrentForecast(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metricUnits bool) (*forecast.Forecast, error)
+	DailyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metricUnits bool) ([]*forecast.Forecast, error)
+	HourlyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metricUnits bool) ([]*forecast.Forecast, error)
 	CacheClear()
 }
 
@@ -307,7 +308,7 @@ func (w *WeatherBoard) render(ctx context.Context, canvas board.Canvas) (board.C
 	}
 
 	zeroed := rgbrender.ZeroedBounds(canvas.Bounds())
-	forecasts := []*Forecast{}
+	forecasts := []*forecast.Forecast{}
 	if w.config.CurrentForecast.Load() {
 		f, err := w.api.CurrentForecast(ctx, w.config.ZipCode, w.config.Country, zeroed, w.config.MetricUnits.Load())
 		if err != nil {

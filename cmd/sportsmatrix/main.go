@@ -28,6 +28,7 @@ import (
 	"github.com/robbydyer/sports/pkg/openweather"
 	"github.com/robbydyer/sports/pkg/pga"
 	"github.com/robbydyer/sports/pkg/renderers/racing"
+	"github.com/robbydyer/sports/pkg/renderers/weather"
 	rgb "github.com/robbydyer/sports/pkg/rgbmatrix-rpi"
 	"github.com/robbydyer/sports/pkg/sportboard"
 	"github.com/robbydyer/sports/pkg/sportsmatrix"
@@ -36,7 +37,6 @@ import (
 	"github.com/robbydyer/sports/pkg/sysboard"
 	"github.com/robbydyer/sports/pkg/textboard"
 	"github.com/robbydyer/sports/pkg/util"
-	"github.com/robbydyer/sports/pkg/weatherboard"
 	"github.com/robbydyer/sports/pkg/yahoo"
 )
 
@@ -318,9 +318,7 @@ func (r *rootArgs) setConfigDefaults() {
 	r.config.StocksConfig.SetDefaults()
 
 	if r.config.WeatherConfig == nil {
-		r.config.WeatherConfig = &weatherboard.Config{
-			Enabled: atomic.NewBool(false),
-		}
+		r.config.WeatherConfig = &weather.Config{}
 	}
 	r.config.WeatherConfig.SetDefaults()
 
@@ -684,10 +682,20 @@ func (r *rootArgs) getBoards(ctx context.Context, logger *zap.Logger) ([]board.B
 			if err != nil {
 				return nil, err
 			}
-			b, err := weatherboard.New(api, r.config.WeatherConfig, logger)
+			renderer, err := weather.New(api, r.config.WeatherConfig, logger)
 			if err != nil {
 				return nil, err
 			}
+			b, err := basicboard.New(renderer, logger)
+			if err != nil {
+				return nil, err
+			}
+			/*
+				b, err := weatherboard.New(api, r.config.WeatherConfig, logger)
+				if err != nil {
+					return nil, err
+				}
+			*/
 			boards = append(boards, b)
 		}
 	}

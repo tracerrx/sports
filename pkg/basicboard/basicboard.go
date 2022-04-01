@@ -30,6 +30,7 @@ type Renderer interface {
 	HTTPPathPrefix() string
 	RPCHandler() (string, http.Handler)
 	SetBoard(*BasicBoard)
+	InBetween() bool
 }
 
 // New ...
@@ -120,7 +121,7 @@ func (b *BasicBoard) Enable() bool {
 
 // InBetween ...
 func (b *BasicBoard) InBetween() bool {
-	return false
+	return b.renderer.InBetween()
 }
 
 // Disable ...

@@ -1,4 +1,4 @@
-package weatherboard
+package weather
 
 import (
 	"context"
@@ -22,7 +22,7 @@ var (
 	blue   = color.RGBA{R: 30, G: 144, B: 255}
 )
 
-func (w *WeatherBoard) drawForecast(ctx context.Context, canvas board.Canvas, f *forecast.Forecast) error {
+func (w *Weather) drawForecast(ctx context.Context, canvas board.Canvas, f *forecast.Forecast) error {
 	canvasBounds := rgbrender.ZeroedBounds(canvas.Bounds())
 
 	spacing := int(math.Ceil(sectionBufferRatio*float64(canvasBounds.Dx()))) / 2
@@ -144,7 +144,7 @@ func (w *WeatherBoard) drawForecast(ctx context.Context, canvas board.Canvas, f 
 	return err
 }
 
-func (w *WeatherBoard) rainLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
+func (w *Weather) rainLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
 	if f.PrecipChance == nil {
 		return nil
 	}
@@ -157,7 +157,7 @@ func (w *WeatherBoard) rainLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
 	return l
 }
 
-func (w *WeatherBoard) tempHighLowLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
+func (w *Weather) tempHighLowLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
 	if f == nil || f.HighTemp == nil && f.LowTemp == nil {
 		return nil
 	}
@@ -180,7 +180,7 @@ func (w *WeatherBoard) tempHighLowLine(f *forecast.Forecast) *rgbrender.ColorCha
 	return line
 }
 
-func (w *WeatherBoard) humidityLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
+func (w *Weather) humidityLine(f *forecast.Forecast) *rgbrender.ColorCharLine {
 	humidity := strings.Split(fmt.Sprintf("Hu: %d%%", f.Humidity), "")
 	line := &rgbrender.ColorCharLine{
 		Chars: humidity,

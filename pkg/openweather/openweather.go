@@ -10,9 +10,9 @@ import (
 
 	"go.uber.org/zap"
 
+	fc "github.com/robbydyer/sports/pkg/forecast"
 	"github.com/robbydyer/sports/pkg/logo"
 	"github.com/robbydyer/sports/pkg/util"
-	"github.com/robbydyer/sports/pkg/weatherboard"
 )
 
 const (
@@ -97,7 +97,7 @@ func weatherKey(zipCode string, country string) string {
 }
 
 // CurrentForecast ...
-func (a *API) CurrentForecast(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metric bool) (*weatherboard.Forecast, error) {
+func (a *API) CurrentForecast(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metric bool) (*fc.Forecast, error) {
 	w, err := a.getWeather(ctx, zipCode, country, metric)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (a *API) CurrentForecast(ctx context.Context, zipCode string, country strin
 }
 
 // DailyForecasts ...
-func (a *API) DailyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metric bool) ([]*weatherboard.Forecast, error) {
+func (a *API) DailyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metric bool) ([]*fc.Forecast, error) {
 	w, err := a.getWeather(ctx, zipCode, country, metric)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (a *API) DailyForecasts(ctx context.Context, zipCode string, country string
 }
 
 // HourlyForecasts ...
-func (a *API) HourlyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metric bool) ([]*weatherboard.Forecast, error) {
+func (a *API) HourlyForecasts(ctx context.Context, zipCode string, country string, bounds image.Rectangle, metric bool) ([]*fc.Forecast, error) {
 	w, err := a.getWeather(ctx, zipCode, country, metric)
 	if err != nil {
 		return nil, err

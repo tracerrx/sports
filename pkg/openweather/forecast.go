@@ -12,16 +12,16 @@ import (
 
 	"go.uber.org/zap"
 
+	fc "github.com/robbydyer/sports/pkg/forecast"
 	"github.com/robbydyer/sports/pkg/rgbrender"
-	"github.com/robbydyer/sports/pkg/weatherboard"
 )
 
 func (w *weather) expired(refresh time.Duration) bool {
 	return w.lastUpdate.Add(refresh).Before(time.Now().Local())
 }
 
-func (a *API) boardForecastFromForecast(forecasts []*forecast, bounds image.Rectangle, metric bool) ([]*weatherboard.Forecast, error) {
-	var ws []*weatherboard.Forecast
+func (a *API) boardForecastFromForecast(forecasts []*forecast, bounds image.Rectangle, metric bool) ([]*fc.Forecast, error) {
+	var ws []*fc.Forecast
 
 	for _, f := range forecasts {
 		if f == nil || len(f.Weather) < 1 {
@@ -31,7 +31,7 @@ func (a *API) boardForecastFromForecast(forecasts []*forecast, bounds image.Rect
 		if err != nil {
 			return nil, err
 		}
-		w := &weatherboard.Forecast{
+		w := &fc.Forecast{
 			Time:        time.Unix(int64(f.Dt), 0),
 			Temperature: &f.Temp,
 			Humidity:    f.Humidity,
@@ -55,8 +55,8 @@ func (a *API) boardForecastFromForecast(forecasts []*forecast, bounds image.Rect
 	return ws, nil
 }
 
-func (a *API) boardForecastFromDaily(forecasts []*daily, bounds image.Rectangle, metric bool) ([]*weatherboard.Forecast, error) {
-	var ws []*weatherboard.Forecast
+func (a *API) boardForecastFromDaily(forecasts []*daily, bounds image.Rectangle, metric bool) ([]*fc.Forecast, error) {
+	var ws []*fc.Forecast
 
 	for _, f := range forecasts {
 		if f.Weather == nil || len(f.Weather) < 1 {
@@ -66,7 +66,7 @@ func (a *API) boardForecastFromDaily(forecasts []*daily, bounds image.Rectangle,
 		if err != nil {
 			return nil, err
 		}
-		w := &weatherboard.Forecast{
+		w := &fc.Forecast{
 			Time:     time.Unix(int64(f.Dt), 0),
 			HighTemp: &f.Temp.Max,
 			LowTemp:  &f.Temp.Min,

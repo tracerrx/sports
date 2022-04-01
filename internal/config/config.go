@@ -1,17 +1,23 @@
 package config
 
 import (
+	"github.com/robbydyer/sports/pkg/basicconfig"
 	"github.com/robbydyer/sports/pkg/calendarboard"
 	"github.com/robbydyer/sports/pkg/clock"
 	"github.com/robbydyer/sports/pkg/imageboard"
 	"github.com/robbydyer/sports/pkg/renderers/racing"
+	"github.com/robbydyer/sports/pkg/renderers/weather"
 	"github.com/robbydyer/sports/pkg/sportboard"
 	"github.com/robbydyer/sports/pkg/sportsmatrix"
 	"github.com/robbydyer/sports/pkg/statboard"
 	"github.com/robbydyer/sports/pkg/stockboard"
 	"github.com/robbydyer/sports/pkg/sysboard"
-	"github.com/robbydyer/sports/pkg/weatherboard"
 )
+
+type WeatherConfig struct {
+	basicconfig.Config
+	weather.Config
+}
 
 // Config holds configuration for the RGB matrix and all of its supported Boards
 type Config struct {
@@ -30,7 +36,7 @@ type Config struct {
 	PGA                *statboard.Config     `json:"pga"`
 	SportsMatrixConfig *sportsmatrix.Config  `json:"sportsMatrixConfig,omitempty"`
 	StocksConfig       *stockboard.Config    `json:"stocksConfig"`
-	WeatherConfig      *weatherboard.Config  `json:"weatherConfig"`
+	WeatherConfig      *weather.Config       `json:"weatherConfig"`
 	F1Config           *racing.Config        `json:"f1Config"`
 	IRLConfig          *racing.Config        `json:"irlConfig"`
 	CalenderConfig     *calendarboard.Config `json:"calendarConfig"`

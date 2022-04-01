@@ -1,26 +1,33 @@
-package racing
+package weather
 
 import (
 	"context"
+	"net/http"
 
-	"github.com/twitchtv/twirp"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	pb "github.com/robbydyer/sports/internal/proto/racingboard"
+	"github.com/twitchtv/twirp"
+
+	pb "github.com/robbydyer/sports/internal/proto/weatherboard"
 )
 
 // Server ...
 type Server struct {
-	board *Racing
+	board *Weather
+}
+
+// GetRPCHandler ...
+func (w *Weather) RPCHandler() (string, http.Handler) {
+	return w.rpcServer.PathPrefix(), w.rpcServer
 }
 
 // SetStatus ...
 func (s *Server) SetStatus(ctx context.Context, req *pb.SetStatusReq) (*emptypb.Empty, error) {
-	cancelBoard := false
 	if req.Status == nil {
 		return &emptypb.Empty{}, twirp.NewError(twirp.InvalidArgument, "nil status sent")
 	}
 
+	cancelBoard := false
 	if req.Status.Enabled && s.board.board != nil {
 		if s.board.board.Enable() {
 			cancelBoard = true
@@ -33,9 +40,19 @@ func (s *Server) SetStatus(ctx context.Context, req *pb.SetStatusReq) (*emptypb.
 	if s.board.config.ScrollMode.CAS(!req.Status.ScrollEnabled, req.Status.ScrollEnabled) {
 		cancelBoard = true
 	}
+	if s.board.config.DailyForecast.CAS(!req.Status.DailyEnabled, req.Status.DailyEnabled) {
+		cancelBoard = true
+	}
+	if s.board.config.HourlyForecast.CAS(!req.Status.HourlyEnabled, req.Status.HourlyEnabled) {
+		cancelBoard = true
+	}
 
 	if cancelBoard {
-		s.board.board.Cancel()
+		select {
+		case s.board.cancelBoard <- struct{}{}:
+			s.board.log.Info("sent cancel board signal on status change")
+		default:
+		}
 	}
 
 	return &emptypb.Empty{}, nil
@@ -47,6 +64,8 @@ func (s *Server) GetStatus(ctx context.Context, req *emptypb.Empty) (*pb.StatusR
 		Status: &pb.Status{
 			Enabled:       s.board.config.Enabled.Load(),
 			ScrollEnabled: s.board.config.ScrollMode.Load(),
+			DailyEnabled:  s.board.config.DailyForecast.Load(),
+			HourlyEnabled: s.board.config.HourlyForecast.Load(),
 		},
 	}, nil
 }
