@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/robbydyer/sports/internal/board"
 	"github.com/robbydyer/sports/internal/imgcanvas"
 )
 
@@ -168,7 +168,7 @@ func TestRender(t *testing.T) {
 		func(ctx context.Context) (image.Image, error) {
 			return i, nil
 		},
-		func(canvas board.Canvas, img image.Image) error {
+		func(canvas draw.Image, img image.Image) error {
 			defer func() { renderedLayers = append(renderedLayers, "layer") }()
 			if img == i {
 				layer1 = true
@@ -186,7 +186,7 @@ func TestRender(t *testing.T) {
 		func(ctx context.Context) (*TextWriter, []string, error) {
 			return writer, []string{"hello"}, nil
 		},
-		func(canvas board.Canvas, writer *TextWriter, text []string) error {
+		func(canvas draw.Image, writer *TextWriter, text []string) error {
 			defer func() { renderedLayers = append(renderedLayers, "text") }()
 			require.NotNil(t, writer)
 			require.Equal(t, []string{"hello"}, text)
@@ -226,7 +226,7 @@ func TestBadRender(t *testing.T) {
 		func(ctx context.Context) (image.Image, error) {
 			return image.NewUniform(color.White), nil
 		},
-		func(canvas board.Canvas, i image.Image) error {
+		func(canvas draw.Image, i image.Image) error {
 			return fmt.Errorf("render failed")
 		},
 	))

@@ -6,12 +6,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/robbydyer/sports/internal/board"
 	"github.com/robbydyer/sports/internal/rgbrender"
 )
 
 // RenderGameCounter ...
-func (s *SportBoard) RenderGameCounter(canvas board.Canvas, numGames int, activeIndex int) (image.Image, error) {
+func (s *SportBoard) RenderGameCounter(canvas image.Image, numGames int, activeIndex int) (image.Image, error) {
 	bounds := rgbrender.ZeroedBounds(canvas.Bounds())
 	spacing := bounds.Dy() / 32
 	pixSize := bounds.Dy() / 32

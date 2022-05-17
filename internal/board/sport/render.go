@@ -83,8 +83,8 @@ LOOP:
 	}
 }
 
-func (s *SportBoard) renderLiveGame(ctx context.Context, canvas board.Canvas, liveGame Game, counter image.Image) error {
-	s.logCanvas(canvas, "render live canvas size")
+func (s *SportBoard) renderLiveGame(ctx context.Context, canvas draw.Image, liveGame Game, counter image.Image) error {
+	// s.logCanvas(canvas, "render live canvas size")
 
 	layers, err := rgbrender.NewLayerDrawer(60*time.Second, s.log)
 	if err != nil {
@@ -151,7 +151,7 @@ func (s *SportBoard) renderLiveGame(ctx context.Context, canvas board.Canvas, li
 					}
 					return writer, []string{quarter, clock}, nil
 				},
-				func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+				func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 					return writer.WriteAlignedBoxed(
 						rgbrender.CenterTop,
 						canvas,
@@ -173,7 +173,7 @@ func (s *SportBoard) renderLiveGame(ctx context.Context, canvas board.Canvas, li
 					}
 					return writer, []string{}, nil
 				},
-				func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+				func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 					isFavorite, err := s.isFavoriteGame(liveGame)
 					if err != nil {
 						return err
@@ -290,9 +290,6 @@ func (s *SportBoard) renderLiveGame(ctx context.Context, canvas board.Canvas, li
 			}
 		}
 
-		if err := canvas.Render(ctx); err != nil {
-			return err
-		}
 		select {
 		case <-ctx.Done():
 			return context.Canceled
@@ -318,7 +315,7 @@ func (s *SportBoard) renderLiveGame(ctx context.Context, canvas board.Canvas, li
 	}
 }
 
-func (s *SportBoard) renderUpcomingGame(ctx context.Context, canvas board.Canvas, liveGame Game, counter image.Image) error {
+func (s *SportBoard) renderUpcomingGame(ctx context.Context, canvas draw.Image, liveGame Game, counter image.Image) error {
 	layers, err := rgbrender.NewLayerDrawer(60*time.Second, s.log)
 	if err != nil {
 		return err
@@ -382,7 +379,7 @@ func (s *SportBoard) renderUpcomingGame(ctx context.Context, canvas board.Canvas
 				}
 				return timeWriter, []string{gameTimeStr, dateStr}, nil
 			},
-			func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+			func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 				return writer.WriteAlignedBoxed(
 					rgbrender.CenterTop,
 					canvas,
@@ -403,7 +400,7 @@ func (s *SportBoard) renderUpcomingGame(ctx context.Context, canvas board.Canvas
 				}
 				return scoreWriter, []string{"VS"}, nil
 			},
-			func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+			func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 				return writer.WriteAlignedBoxed(
 					rgbrender.CenterBottom,
 					canvas,
@@ -418,14 +415,14 @@ func (s *SportBoard) renderUpcomingGame(ctx context.Context, canvas board.Canvas
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("context canceled")
+		return context.Canceled
 	default:
 	}
 
 	return layers.Draw(ctx, canvas)
 }
 
-func (s *SportBoard) renderCompleteGame(ctx context.Context, canvas board.Canvas, liveGame Game, counter image.Image) error {
+func (s *SportBoard) renderCompleteGame(ctx context.Context, canvas draw.Image, liveGame Game, counter image.Image) error {
 	layers, err := rgbrender.NewLayerDrawer(60*time.Second, s.log)
 	if err != nil {
 		return err
@@ -470,7 +467,7 @@ func (s *SportBoard) renderCompleteGame(ctx context.Context, canvas board.Canvas
 				}
 				return writer, []string{"FINAL"}, nil
 			},
-			func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+			func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 				return writer.WriteAlignedBoxed(
 					rgbrender.CenterTop,
 					canvas,
@@ -507,7 +504,7 @@ func (s *SportBoard) renderCompleteGame(ctx context.Context, canvas board.Canvas
 				}
 				return writer, score, nil
 			},
-			func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+			func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 				return writer.WriteAlignedBoxed(
 					rgbrender.CenterBottom,
 					canvas,
@@ -533,7 +530,7 @@ func counterLayer(counter image.Image) *rgbrender.Layer {
 	}
 	return rgbrender.NewLayer(
 		nil,
-		func(canvas board.Canvas, img image.Image) error {
+		func(canvas draw.Image, img image.Image) error {
 			draw.Draw(canvas, counter.Bounds(), counter, image.Point{}, draw.Over)
 			return nil
 		},
@@ -567,7 +564,7 @@ func (s *SportBoard) logoLayers(liveGame Game, bounds image.Rectangle) ([]*rgbre
 
 				return l, nil
 			},
-			func(canvas board.Canvas, img image.Image) error {
+			func(canvas draw.Image, img image.Image) error {
 				if img == nil {
 					writer, err := s.getTimeWriter(bounds)
 					if err != nil {
@@ -612,7 +609,7 @@ func (s *SportBoard) logoLayers(liveGame Game, bounds image.Rectangle) ([]*rgbre
 
 				return l, nil
 			},
-			func(canvas board.Canvas, img image.Image) error {
+			func(canvas draw.Image, img image.Image) error {
 				if img == nil {
 					writer, err := s.getTimeWriter(bounds)
 					if err != nil {
@@ -670,7 +667,7 @@ func (s *SportBoard) gradientLayer(bounds image.Rectangle, scoreLen int) []*rgbr
 				gradient := rgbrender.GradientXRectangle(gradientBounds, fillPct, color.Black, s.log)
 				return gradient, nil
 			},
-			func(canvas board.Canvas, img image.Image) error {
+			func(canvas draw.Image, img image.Image) error {
 				pt := image.Pt(img.Bounds().Min.X, img.Bounds().Min.Y)
 				draw.Draw(canvas, img.Bounds(), img, pt, draw.Over)
 
@@ -812,7 +809,7 @@ func (s *SportBoard) teamInfoLayers(canvas draw.Image, liveGame Game, bounds ima
 
 				return writer, []string{rank, record}, nil
 			},
-			func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+			func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 				if len(text) != 2 {
 					return fmt.Errorf("invalid rank/record input")
 				}
@@ -926,7 +923,7 @@ func (s *SportBoard) teamInfoLayers(canvas draw.Image, liveGame Game, bounds ima
 
 				return writer, []string{rank, record}, nil
 			},
-			func(canvas board.Canvas, writer *rgbrender.TextWriter, text []string) error {
+			func(canvas draw.Image, writer *rgbrender.TextWriter, text []string) error {
 				if len(text) != 2 {
 					return fmt.Errorf("invalid rank/record input")
 				}
@@ -970,7 +967,7 @@ func (s *SportBoard) teamInfoLayers(canvas draw.Image, liveGame Game, bounds ima
 	}, nil
 }
 
-func (s *SportBoard) renderNoScheduled(ctx context.Context, canvas board.Canvas) error {
+func (s *SportBoard) renderNoScheduled(ctx context.Context, canvas draw.Image) error {
 	s.log.Debug("no scheduled games", zap.String("league", s.api.League()))
 	if !s.config.ShowNoScheduledLogo.Load() {
 		return nil
@@ -1009,18 +1006,5 @@ func (s *SportBoard) renderNoScheduled(ctx context.Context, canvas board.Canvas)
 		color.Black,
 	)
 
-	if err := canvas.Render(ctx); err != nil {
-		return err
-	}
-
-	if s.config.ScrollMode.Load() && canvas.Scrollable() {
-		return nil
-	}
-
-	select {
-	case <-ctx.Done():
-		return context.Canceled
-	case <-time.After(s.config.boardDelay / 2):
-		return nil
-	}
+	return nil
 }

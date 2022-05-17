@@ -92,8 +92,7 @@ type Config struct {
 	Stats                *statboard.Config `json:"stats"`
 	Headlines            *textboard.Config `json:"headlines"`
 	ScrollMode           *atomic.Bool      `json:"scrollMode"`
-	TightScroll          *atomic.Bool      `json:"tightScroll"`
-	TightScrollPadding   int               `json:"tightScrollPadding"`
+	ScrollPadding        int               `json:"tightScrollPadding" json:"scrollPadding"`
 	ScrollDelay          string            `json:"scrollDelay"`
 	GamblingSpread       *atomic.Bool      `json:"showOdds"`
 	ShowNoScheduledLogo  *atomic.Bool      `json:"showNotScheduled"`
@@ -185,9 +184,6 @@ func (c *Config) SetDefaults() {
 	}
 	if c.ScrollMode == nil {
 		c.ScrollMode = atomic.NewBool(false)
-	}
-	if c.TightScroll == nil {
-		c.TightScroll = atomic.NewBool(false)
 	}
 	if c.GamblingSpread == nil {
 		c.GamblingSpread = atomic.NewBool(false)
@@ -405,7 +401,10 @@ func (s *SportBoard) callCancelBoard() {
 
 // Render ...
 func (s *SportBoard) Render(ctx context.Context, canvas board.Canvas) error {
-	c, err := s.render(ctx, canvas)
+	s.renderCtx, s.renderCancel = context.WithCancel(ctx)
+	defer s.renderCancel()
+
+	c, err := s.render(s.renderCtx, canvas)
 	if err != nil {
 		return err
 	}
@@ -419,7 +418,7 @@ func (s *SportBoard) Render(ctx context.Context, canvas board.Canvas) error {
 				)
 			}
 		}()
-		return c.Render(ctx)
+		return c.Render(s.renderCtx)
 	}
 
 	return nil
@@ -427,17 +426,17 @@ func (s *SportBoard) Render(ctx context.Context, canvas board.Canvas) error {
 
 // ScrollRender ...
 func (s *SportBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padding int) (board.Canvas, error) {
+	s.renderCtx, s.renderCancel = context.WithCancel(ctx)
+	defer s.renderCancel()
+
 	origScrollMode := s.config.ScrollMode.Load()
-	origTight := s.config.TightScroll.Load()
 	defer func() {
 		s.config.ScrollMode.Store(origScrollMode)
-		s.config.TightScroll.Store(origTight)
 	}()
 
 	s.config.ScrollMode.Store(true)
-	s.config.TightScroll.Store(true)
 
-	return s.render(ctx, canvas)
+	return s.render(s.renderCtx, canvas)
 }
 
 // Render ...
@@ -449,14 +448,11 @@ func (s *SportBoard) render(ctx context.Context, canvas board.Canvas) (board.Can
 
 	s.logCanvas(canvas, "sportboard Render() called canvas")
 
-	s.renderCtx, s.renderCancel = context.WithCancel(ctx)
-	defer s.renderCancel()
-
-	loadCtx, loadCancel := context.WithTimeout(s.renderCtx, 10*time.Minute)
+	loadCtx, loadCancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer loadCancel()
 	go s.renderLoading(loadCtx, canvas)
 
-	allGames, err := s.api.GetScheduledGames(s.renderCtx, s.config.TodayFunc())
+	allGames, err := s.api.GetScheduledGames(ctx, s.config.TodayFunc())
 	if err != nil {
 		s.log.Error("failed to get scheduled games",
 			zap.String("league", s.api.League()),
@@ -535,7 +531,7 @@ OUTER:
 	)
 
 	select {
-	case <-s.renderCtx.Done():
+	case <-ctx.Done():
 		return nil, context.Canceled
 	default:
 	}
@@ -572,7 +568,7 @@ OUTER:
 		}
 
 		loadCancel()
-		return nil, s.renderNoScheduled(s.renderCtx, canvas)
+		return nil, s.renderNoScheduled(ctx, canvas)
 	}
 
 	preloader := make(map[int]chan struct{})
@@ -587,12 +583,15 @@ OUTER:
 	defer func() { _ = canvas.Clear() }()
 
 	var tightCanvas *scrcnvs.ScrollCanvas
-	base, ok := canvas.(*scrcnvs.ScrollCanvas)
 
-	if canvas.Scrollable() && s.config.TightScroll.Load() && ok {
+	if canvas.Scrollable() && s.config.ScrollMode.Load() {
+		base, ok := canvas.(*scrcnvs.ScrollCanvas)
+		if !ok {
+			return nil, fmt.Errorf("unsupported scroll canvas type %T", base)
+		}
 		var err error
 		tightCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, s.log,
-			scrcnvs.WithMergePadding(s.config.TightScrollPadding),
+			scrcnvs.WithMergePadding(s.config.ScrollPadding),
 			scrcnvs.WithName(s.api.League()),
 		)
 		if err != nil {
@@ -604,22 +603,14 @@ OUTER:
 		tightCanvas.SetScrollSpeed(s.config.scrollDelay)
 
 		go tightCanvas.MatchScroll(ctx, base)
-	} else if canvas.Scrollable() && s.config.ScrollMode.Load() && ok {
-		base.SetScrollSpeed(s.config.scrollDelay)
-
-		defer func() {
-			s.config.scrollDelay = base.GetScrollSpeed()
-			s.log.Info("updating configured sport scroll speed",
-				zap.String("sport", s.api.League()),
-				zap.Duration("speed", s.config.scrollDelay),
-			)
-		}()
 	}
+
+	stickyDelay := s.getStickyDelay()
 
 GAMES:
 	for gameIndex, game := range games {
 		select {
-		case <-s.renderCtx.Done():
+		case <-ctx.Done():
 			return nil, context.Canceled
 		default:
 		}
@@ -636,7 +627,7 @@ GAMES:
 			nextID := games[nextGameIndex].GetID()
 			preloader[nextID] = make(chan struct{}, 1)
 			go func() {
-				if err := s.preloadLiveGame(s.renderCtx, games[nextGameIndex], preloader[nextID]); err != nil {
+				if err := s.preloadLiveGame(ctx, games[nextGameIndex], preloader[nextID]); err != nil {
 					s.log.Error("error while preloading next game", zap.Error(err))
 				}
 			}()
@@ -644,7 +635,7 @@ GAMES:
 
 		// Wait for the preloader to finish getting data, but with a timeout.
 		select {
-		case <-s.renderCtx.Done():
+		case <-ctx.Done():
 			return nil, context.Canceled
 		case <-preloader[game.GetID()]:
 			s.log.Debug("preloader marked ready", zap.Int("game ID", game.GetID()))
@@ -674,38 +665,71 @@ GAMES:
 
 		loadCancel()
 
-		if err := s.renderGame(s.renderCtx, canvas, cachedGame, counter); err != nil {
-			s.log.Error("failed to render sportboard game", zap.Error(err))
-			continue GAMES
-		}
+		if canvas.Scrollable() && tightCanvas != nil {
+			if err := s.renderGame(ctx, canvas, cachedGame, counter); err != nil {
+				s.log.Error("failed to render sportboard game", zap.Error(err))
+				continue GAMES
+			}
 
-		if canvas.Scrollable() && s.config.TightScroll.Load() && tightCanvas != nil {
 			s.log.Debug("adding to tight scroll canvas",
 				zap.Int("total width", tightCanvas.Width()),
 			)
 			tightCanvas.AddCanvas(canvas)
-
 			draw.Draw(canvas, canvas.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Over)
+
+			if gameIndex == len(games)-1 {
+				return tightCanvas, nil
+			}
+
 			continue GAMES
 		}
 
-		if err := canvas.Render(s.renderCtx); err != nil {
-			s.log.Error("failed to render", zap.Error(err))
-			continue GAMES
+		// Non scroll mode
+
+		doGame := func() error {
+			if err := s.renderGame(ctx, canvas, cachedGame, counter); err != nil {
+				s.log.Error("failed to render sportboard game", zap.Error(err))
+				return err
+			}
+			if err := canvas.Render(ctx); err != nil {
+				s.log.Error("failed to render", zap.Error(err))
+				return err
+			}
+
+			if !s.config.ScrollMode.Load() {
+				select {
+				case <-ctx.Done():
+					return context.Canceled
+				case <-time.After(s.config.boardDelay):
+				}
+			}
+
+			return nil
 		}
 
-		if !s.config.ScrollMode.Load() {
-			select {
-			case <-s.renderCtx.Done():
-				return nil, context.Canceled
-			case <-time.After(s.config.boardDelay):
+		if err := doGame(); err != nil {
+			return nil, err
+		}
+
+		isFavorite, err := s.isFavoriteGame(cachedGame)
+		if err != nil {
+			return nil, err
+		}
+		stickyStart := time.Now()
+	STICKY:
+		for {
+			if !s.config.FavoriteSticky.Load() || !isFavorite {
+				break STICKY
+			}
+			if stickyDelay != nil {
+				if time.Since(stickyStart) < *stickyDelay {
+					break STICKY
+				}
+			}
+			if err := doGame(); err != nil {
+				return nil, err
 			}
 		}
-	}
-
-	if canvas.Scrollable() && tightCanvas != nil {
-		// tightCanvas.Merge(s.config.TightScrollPadding)
-		return tightCanvas, nil
 	}
 
 	return nil, nil
@@ -863,7 +887,7 @@ func (s *SportBoard) doGrid(ctx context.Context, grid *rgbrender.Grid, canvas bo
 	return canvas.Render(ctx)
 }
 
-func (s *SportBoard) renderGame(ctx context.Context, canvas board.Canvas, liveGame Game, counter image.Image) error {
+func (s *SportBoard) renderGame(ctx context.Context, canvas draw.Image, liveGame Game, counter image.Image) error {
 	select {
 	case <-ctx.Done():
 		return context.Canceled
@@ -879,8 +903,6 @@ func (s *SportBoard) renderGame(ctx context.Context, canvas board.Canvas, liveGa
 	if err != nil {
 		return fmt.Errorf("failed to determine if game is complete: %w", err)
 	}
-
-	s.logCanvas(canvas, "sportboard renderGame canvas")
 
 	if isLive {
 		if err := s.renderLiveGame(ctx, canvas, liveGame, counter); err != nil {

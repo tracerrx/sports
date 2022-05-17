@@ -128,36 +128,6 @@ func (s *SportBoard) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
 			},
 		},
 		{
-			Path: fmt.Sprintf("/%s/tightscrollon", s.api.HTTPPathPrefix()),
-			Handler: func(w http.ResponseWriter, req *http.Request) {
-				s.log.Info("enabling tight scroll mode", zap.String("board", s.api.League()))
-				s.callCancelBoard()
-				s.config.TightScroll.Store(true)
-				s.api.CacheClear(context.Background())
-			},
-		},
-		{
-			Path: fmt.Sprintf("/%s/tightscrolloff", s.api.HTTPPathPrefix()),
-			Handler: func(w http.ResponseWriter, req *http.Request) {
-				s.log.Info("disabling scroll mode", zap.String("board", s.api.League()))
-				s.callCancelBoard()
-				s.config.TightScroll.Store(false)
-				s.api.CacheClear(context.Background())
-			},
-		},
-		{
-			Path: fmt.Sprintf("/%s/tightscrollstatus", s.api.HTTPPathPrefix()),
-			Handler: func(w http.ResponseWriter, req *http.Request) {
-				s.log.Debug("get board tight scroll status", zap.String("board", s.Name()))
-				w.Header().Set("Content-Type", "text/plain")
-				if s.config.TightScroll.Load() {
-					_, _ = w.Write([]byte("true"))
-					return
-				}
-				_, _ = w.Write([]byte("false"))
-			},
-		},
-		{
 			Path: fmt.Sprintf("/%s/recordrankon", s.api.HTTPPathPrefix()),
 			Handler: func(w http.ResponseWriter, req *http.Request) {
 				s.log.Info("enabling team record/rank mode", zap.String("board", s.api.League()))

@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/draw"
 	"sort"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
-
-	"github.com/robbydyer/sports/internal/board"
 )
 
 const (
@@ -29,10 +28,10 @@ type (
 	TextPrepare func(ctx context.Context) (*TextWriter, []string, error)
 
 	// Draw is a func type that draws a Layer
-	Draw func(canvas board.Canvas, img image.Image) error
+	Draw func(canvas draw.Image, img image.Image) error
 
 	// Write is a func type that draws a TextLayer
-	Write func(canvas board.Canvas, writer *TextWriter, text []string) error
+	Write func(canvas draw.Image, writer *TextWriter, text []string) error
 )
 
 // LayerDrawer draws layers on a board.Canvas. It prepares layers simultaneously, then
@@ -253,7 +252,7 @@ ERR:
 }
 
 // Draw draws each layer. It does each priority level concurrently
-func (l *LayerDrawer) Draw(ctx context.Context, canvas board.Canvas) error {
+func (l *LayerDrawer) Draw(ctx context.Context, canvas draw.Image) error {
 	if !l.prepared {
 		if err := l.Prepare(ctx); err != nil {
 			return fmt.Errorf("failed to prepare layers before drawing: %w", err)

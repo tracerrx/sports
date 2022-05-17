@@ -46,10 +46,6 @@ func (s *Server) SetStatus(ctx context.Context, req *pb.SetStatusReq) (*emptypb.
 		cancelBoard = true
 		clearDrawCache = true
 	}
-	if s.board.config.TightScroll.CAS(!req.Status.TightScrollEnabled, req.Status.TightScrollEnabled) {
-		cancelBoard = true
-		clearDrawCache = true
-	}
 	if s.board.config.ShowRecord.CAS(!req.Status.RecordRankEnabled, req.Status.RecordRankEnabled) {
 		cancelBoard = true
 		clearDrawCache = true
@@ -77,15 +73,14 @@ func (s *Server) SetStatus(ctx context.Context, req *pb.SetStatusReq) (*emptypb.
 func (s *Server) GetStatus(ctx context.Context, req *emptypb.Empty) (*pb.StatusResp, error) {
 	return &pb.StatusResp{
 		Status: &pb.Status{
-			Enabled:            s.board.Enabler().Enabled(),
-			FavoriteHidden:     s.board.config.HideFavoriteScore.Load(),
-			FavoriteSticky:     s.board.config.FavoriteSticky.Load(),
-			ScrollEnabled:      s.board.config.ScrollMode.Load(),
-			TightScrollEnabled: s.board.config.TightScroll.Load(),
-			RecordRankEnabled:  s.board.config.ShowRecord.Load(),
-			OddsEnabled:        s.board.config.GamblingSpread.Load(),
-			UseGradient:        s.board.config.UseGradient.Load(),
-			LiveOnly:           s.board.config.LiveOnly.Load(),
+			Enabled:           s.board.Enabler().Enabled(),
+			FavoriteHidden:    s.board.config.HideFavoriteScore.Load(),
+			FavoriteSticky:    s.board.config.FavoriteSticky.Load(),
+			ScrollEnabled:     s.board.config.ScrollMode.Load(),
+			RecordRankEnabled: s.board.config.ShowRecord.Load(),
+			OddsEnabled:       s.board.config.GamblingSpread.Load(),
+			UseGradient:       s.board.config.UseGradient.Load(),
+			LiveOnly:          s.board.config.LiveOnly.Load(),
 		},
 	}, nil
 }

@@ -27,7 +27,6 @@ function jsonToStatus(jsonDat) {
     status.setScrollEnabled(dat.scroll_enabled);
     status.setFavoriteHidden(dat.favorite_hidden);
     status.setFavoriteSticky(dat.favorite_sticky);
-    status.setTightScrollEnabled(dat.tight_scroll_enabled);
     status.setRecordRankEnabled(dat.record_rank_enabled);
     status.setOddsEnabled(dat.odds_enabled);
     status.setUseGradient(dat.use_gradient);
@@ -182,12 +181,6 @@ class Sport extends React.Component {
                     <Col>
                         <Form.Switch id={this.props.sport + "scroller"} label="Scroll Mode" checked={this.state.status.getScrollEnabled()}
                             onChange={() => { this.state.status.setScrollEnabled(!this.state.status.getScrollEnabled()); this.updateStatus(); }} />
-                    </Col>
-                </Row>
-                <Row className="text-left">
-                    <Col>
-                        <Form.Switch id={this.props.sport + "tightscroller"} label="Back-to-back Scroll Mode" checked={this.state.status.getTightScrollEnabled()}
-                            onChange={() => { this.state.status.setTightScrollEnabled(!this.state.status.getTightScrollEnabled()); this.updateStatus(); }} />
                     </Col>
                 </Row>
                 <Row className="text-left">
