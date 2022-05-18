@@ -60,7 +60,7 @@ type Config struct {
 	BoardDelay         string       `json:"boardDelay"`
 	UpdateInterval     string       `json:"updateInterval"`
 	ScrollMode         *atomic.Bool `json:"scrollMode"`
-	TightScrollPadding int          `json:"tightScrollPadding"`
+	ScrollPadding      int          `json:"tightScrollPadding" json:"scrollPadding"`
 	ScrollDelay        string       `json:"scrollDelay"`
 	OnTimes            []string     `json:"onTimes"`
 	OffTimes           []string     `json:"offTimes"`
@@ -222,6 +222,7 @@ func (s *StockBoard) enablerCancel(ctx context.Context, cancel context.CancelFun
 	}
 }
 
+/*
 // Render ...
 func (s *StockBoard) Render(ctx context.Context, canvas board.Canvas) error {
 	c, err := s.render(ctx, canvas)
@@ -251,9 +252,10 @@ func (s *StockBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padd
 
 	return s.render(ctx, canvas)
 }
+*/
 
 // Render ...
-func (s *StockBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (s *StockBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	boardCtx, boardCancel := context.WithCancel(ctx)
 	defer boardCancel()
 
@@ -278,7 +280,7 @@ func (s *StockBoard) render(ctx context.Context, canvas board.Canvas) (board.Can
 
 		var err error
 		scrollCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, s.log,
-			scrcnvs.WithMergePadding(s.config.TightScrollPadding),
+			scrcnvs.WithMergePadding(s.config.ScrollPadding),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tight scroll canvas: %w", err)
@@ -412,4 +414,24 @@ func (s *StockBoard) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
 // ScrollMode ...
 func (s *StockBoard) ScrollMode() bool {
 	return s.config.ScrollMode.Load()
+}
+
+func (s *StockBoard) SetScrollMode(b bool) {
+	s.config.ScrollMode.Store(b)
+}
+
+func (s *StockBoard) ScrollDelay() time.Duration {
+	return s.config.scrollDelay
+}
+
+func (s *StockBoard) SetScrollDelay(d time.Duration) {
+	s.config.scrollDelay = d
+}
+
+func (s *StockBoard) ScrollPad() int {
+	return s.config.ScrollPadding
+}
+
+func (s *StockBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }

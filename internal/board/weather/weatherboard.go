@@ -43,25 +43,25 @@ type WeatherBoard struct {
 
 // Config for a WeatherBoard
 type Config struct {
-	boardDelay         time.Duration
-	scrollDelay        time.Duration
-	StartEnabled       *atomic.Bool `json:"enabled"`
-	BoardDelay         string       `json:"boardDelay"`
-	ScrollMode         *atomic.Bool `json:"scrollMode"`
-	TightScrollPadding int          `json:"tightScrollPadding"`
-	ScrollDelay        string       `json:"scrollDelay"`
-	ZipCode            string       `json:"zipCode"`
-	Country            string       `json:"country"`
-	APIKey             string       `json:"apiKey"`
-	CurrentForecast    *atomic.Bool `json:"currentForecast"`
-	HourlyForecast     *atomic.Bool `json:"hourlyForecast"`
-	DailyForecast      *atomic.Bool `json:"dailyForecast"`
-	DailyNumber        int          `json:"dailyNumber"`
-	HourlyNumber       int          `json:"hourlyNumber"`
-	OnTimes            []string     `json:"onTimes"`
-	OffTimes           []string     `json:"offTimes"`
-	MetricUnits        *atomic.Bool `json:"metricUnits"`
-	ShowBetween        *atomic.Bool `json:"showBetween"`
+	boardDelay      time.Duration
+	scrollDelay     time.Duration
+	StartEnabled    *atomic.Bool `json:"enabled"`
+	BoardDelay      string       `json:"boardDelay"`
+	ScrollMode      *atomic.Bool `json:"scrollMode"`
+	ScrollPadding   int          `json:"tightScrollPadding" json:"scrollPadding"`
+	ScrollDelay     string       `json:"scrollDelay"`
+	ZipCode         string       `json:"zipCode"`
+	Country         string       `json:"country"`
+	APIKey          string       `json:"apiKey"`
+	CurrentForecast *atomic.Bool `json:"currentForecast"`
+	HourlyForecast  *atomic.Bool `json:"hourlyForecast"`
+	DailyForecast   *atomic.Bool `json:"dailyForecast"`
+	DailyNumber     int          `json:"dailyNumber"`
+	HourlyNumber    int          `json:"hourlyNumber"`
+	OnTimes         []string     `json:"onTimes"`
+	OffTimes        []string     `json:"offTimes"`
+	MetricUnits     *atomic.Bool `json:"metricUnits"`
+	ShowBetween     *atomic.Bool `json:"showBetween"`
 }
 
 // Forecast ...
@@ -218,6 +218,7 @@ func (w *WeatherBoard) enablerCancel(ctx context.Context, cancel context.CancelF
 	}
 }
 
+/*
 // Render ...
 func (w *WeatherBoard) Render(ctx context.Context, canvas board.Canvas) error {
 	c, err := w.render(ctx, canvas)
@@ -247,9 +248,10 @@ func (w *WeatherBoard) ScrollRender(ctx context.Context, canvas board.Canvas, pa
 
 	return w.render(ctx, canvas)
 }
+*/
 
 // Render ...
-func (w *WeatherBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (w *WeatherBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	if !w.Enabler().Enabled() {
 		w.log.Warn("skipping disabled board", zap.String("board", "weather"))
 		return nil, nil
@@ -265,7 +267,7 @@ func (w *WeatherBoard) render(ctx context.Context, canvas board.Canvas) (board.C
 	if ok && w.config.ScrollMode.Load() {
 		var err error
 		scrollCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, w.log,
-			scrcnvs.WithMergePadding(w.config.TightScrollPadding),
+			scrcnvs.WithMergePadding(w.config.ScrollPadding),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get tight scroll canvas: %w", err)
@@ -508,6 +510,26 @@ func (w *WeatherBoard) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
 // ScrollMode ...
 func (w *WeatherBoard) ScrollMode() bool {
 	return w.config.ScrollMode.Load()
+}
+
+func (w *WeatherBoard) SetScrollMode(b bool) {
+	w.config.ScrollMode.Store(b)
+}
+
+func (w *WeatherBoard) ScrollDelay() time.Duration {
+	return w.config.scrollDelay
+}
+
+func (w *WeatherBoard) SetScrollDelay(d time.Duration) {
+	w.config.scrollDelay = d
+}
+
+func (w *WeatherBoard) ScrollPad() int {
+	return w.config.ScrollPadding
+}
+
+func (w *WeatherBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 /*

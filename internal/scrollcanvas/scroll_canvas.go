@@ -14,7 +14,6 @@ import (
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 
-	"github.com/robbydyer/sports/internal/board"
 	"github.com/robbydyer/sports/internal/matrix"
 )
 
@@ -50,7 +49,7 @@ type ScrollCanvas struct {
 	actuals             []*image.RGBA
 	merged              *atomic.Bool
 	subCanvases         []*subCanvasHorizontal
-	mergePad            int
+	MergePad            int
 	scrollStatus        chan float64
 	stateChangeCallback func()
 	sendScrollSpeedChan chan time.Duration
@@ -372,11 +371,6 @@ func (c *ScrollCanvas) Store(s bool) bool {
 	return c.enabled.CAS(!s, s)
 }
 
-// GetHTTPHandlers ...
-func (c *ScrollCanvas) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
-	return nil, nil
-}
-
 func (c *ScrollCanvas) topToBottom(ctx context.Context) error {
 	if err := c.verticalPrep(ctx); err != nil {
 		return err
@@ -500,8 +494,8 @@ func (c *ScrollCanvas) PrepareSubCanvases() {
 			// Add a subcanvas for padding between
 			c.subCanvases[subIndex] = &subCanvasHorizontal{
 				actualStartX: 0,
-				actualEndX:   c.mergePad,
-				img:          image.NewRGBA(image.Rect(0, 0, c.mergePad, c.h)),
+				actualEndX:   c.MergePad,
+				img:          image.NewRGBA(image.Rect(0, 0, c.MergePad, c.h)),
 				previous:     c.subCanvases[subIndex-1],
 			}
 			subIndex++
@@ -660,7 +654,7 @@ func WithScrollDirection(direct ScrollDirection) ScrollCanvasOption {
 // WithMergePadding ...
 func WithMergePadding(pad int) ScrollCanvasOption {
 	return func(c *ScrollCanvas) error {
-		c.mergePad = pad
+		c.MergePad = pad
 		return nil
 	}
 }

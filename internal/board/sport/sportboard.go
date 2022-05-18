@@ -351,6 +351,26 @@ func (s *SportBoard) ScrollMode() bool {
 	return s.config.ScrollMode.Load()
 }
 
+func (s *SportBoard) SetScrollMode(b bool) {
+	s.config.ScrollMode.Store(b)
+}
+
+func (s *SportBoard) ScrollDelay() time.Duration {
+	return s.config.scrollDelay
+}
+
+func (s *SportBoard) SetScrollDelay(d time.Duration) {
+	s.config.scrollDelay = d
+}
+
+func (s *SportBoard) ScrollPad() int {
+	return s.config.ScrollPadding
+}
+
+func (s *SportBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
+}
+
 // SetLiveOnly sets this board to show only live games or not
 func (s *SportBoard) SetLiveOnly(live bool) {
 	if s.config.LiveOnly.CAS(!live, live) {
@@ -399,6 +419,7 @@ func (s *SportBoard) callCancelBoard() {
 	}
 }
 
+/*
 // Render ...
 func (s *SportBoard) Render(ctx context.Context, canvas board.Canvas) error {
 	s.renderCtx, s.renderCancel = context.WithCancel(ctx)
@@ -409,16 +430,26 @@ func (s *SportBoard) Render(ctx context.Context, canvas board.Canvas) error {
 		return err
 	}
 	if c != nil {
-		defer func() {
-			if scr, ok := c.(*scrcnvs.ScrollCanvas); ok {
+		if scr, ok := c.(*scrcnvs.ScrollCanvas); ok {
+			origSpd := scr.GetScrollSpeed()
+			origDir := scr.GetScrollDirection()
+			defer func() {
 				s.config.scrollDelay = scr.GetScrollSpeed()
+				scr.SetScrollSpeed(origSpd)
+				scr.SetScrollDirection(origDir)
 				s.log.Info("updating configured sport scroll speed after tight scroll",
 					zap.String("sport", s.api.League()),
 					zap.Duration("speed", s.config.scrollDelay),
 				)
-			}
-		}()
-		return c.Render(s.renderCtx)
+			}()
+
+			scr.SetScrollDirection(scrcnvs.RightToLeft)
+			scr.SetScrollSpeed(s.config.scrollDelay)
+			scr.MergePad = s.config.ScrollPadding
+		}
+		if err := c.Render(s.renderCtx); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -438,9 +469,13 @@ func (s *SportBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padd
 
 	return s.render(s.renderCtx, canvas)
 }
+*/
 
 // Render ...
-func (s *SportBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (s *SportBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+	s.renderCtx, s.renderCancel = context.WithCancel(ctx)
+	ctx = s.renderCtx
+
 	if !s.Enabler().Enabled() {
 		s.log.Warn("skipping disabled board", zap.String("board", s.api.League()))
 		return nil, nil
@@ -582,27 +617,13 @@ OUTER:
 
 	defer func() { _ = canvas.Clear() }()
 
-	var tightCanvas *scrcnvs.ScrollCanvas
+	var scrollCanvas *scrcnvs.ScrollCanvas
 
 	if canvas.Scrollable() && s.config.ScrollMode.Load() {
-		base, ok := canvas.(*scrcnvs.ScrollCanvas)
+		scrollCanvas, ok := canvas.(*scrcnvs.ScrollCanvas)
 		if !ok {
-			return nil, fmt.Errorf("unsupported scroll canvas type %T", base)
+			return nil, fmt.Errorf("unsupported scroll canvas type %T", scrollCanvas)
 		}
-		var err error
-		tightCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, s.log,
-			scrcnvs.WithMergePadding(s.config.ScrollPadding),
-			scrcnvs.WithName(s.api.League()),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get tight scroll canvas: %w", err)
-		}
-
-		tightCanvas.SetScrollDirection(scrcnvs.RightToLeft)
-		base.SetScrollSpeed(s.config.scrollDelay)
-		tightCanvas.SetScrollSpeed(s.config.scrollDelay)
-
-		go tightCanvas.MatchScroll(ctx, base)
 	}
 
 	stickyDelay := s.getStickyDelay()
@@ -665,20 +686,20 @@ GAMES:
 
 		loadCancel()
 
-		if canvas.Scrollable() && tightCanvas != nil {
-			if err := s.renderGame(ctx, canvas, cachedGame, counter); err != nil {
+		if canvas.Scrollable() && scrollCanvas != nil {
+			img := image.NewNRGBA(canvas.Bounds())
+			if err := s.renderGame(ctx, img, cachedGame, counter); err != nil {
 				s.log.Error("failed to render sportboard game", zap.Error(err))
 				continue GAMES
 			}
 
 			s.log.Debug("adding to tight scroll canvas",
-				zap.Int("total width", tightCanvas.Width()),
+				zap.Int("total width", scrollCanvas.Width()),
 			)
-			tightCanvas.AddCanvas(canvas)
-			draw.Draw(canvas, canvas.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Over)
+			scrollCanvas.AddCanvas(img)
 
 			if gameIndex == len(games)-1 {
-				return tightCanvas, nil
+				return scrollCanvas, nil
 			}
 
 			continue GAMES
@@ -686,7 +707,7 @@ GAMES:
 
 		// Non scroll mode
 
-		doGame := func() error {
+		doGame := func(canvas board.Canvas) error {
 			if err := s.renderGame(ctx, canvas, cachedGame, counter); err != nil {
 				s.log.Error("failed to render sportboard game", zap.Error(err))
 				return err
@@ -707,7 +728,7 @@ GAMES:
 			return nil
 		}
 
-		if err := doGame(); err != nil {
+		if err := doGame(canvas); err != nil {
 			return nil, err
 		}
 
@@ -726,10 +747,14 @@ GAMES:
 					break STICKY
 				}
 			}
-			if err := doGame(); err != nil {
+			if err := doGame(canvas); err != nil {
 				return nil, err
 			}
 		}
+	}
+
+	if scrollCanvas != nil {
+		return scrollCanvas, nil
 	}
 
 	return nil, nil

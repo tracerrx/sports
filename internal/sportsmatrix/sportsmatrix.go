@@ -13,6 +13,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/robbydyer/sports/internal/board"
 	"github.com/robbydyer/sports/internal/imgcanvas"
@@ -740,18 +741,14 @@ func (s *SportsMatrix) doBoard(ctx context.Context, b board.Board) error {
 	s.log.Debug("Processing board", zap.String("board", b.Name()))
 
 	if !b.Enabler().Enabled() {
-		// s.log.Debug("skipping disabled board", zap.String("board", b.Name()))
 		return nil
 	}
 
-	var wg sync.WaitGroup
-
-	var boardErr error
+	wg, ctx := errgroup.WithContext(ctx)
 
 CANVASES:
 	for _, canvas := range s.canvases {
 		if !canvas.Enabled() {
-			// s.log.Warn("canvas is disabled, skipping", zap.String("canvas", canvas.Name()))
 			continue CANVASES
 		}
 
@@ -761,35 +758,20 @@ CANVASES:
 			}
 		}
 
-		wg.Add(1)
-		go func(canvas board.Canvas) {
-			defer wg.Done()
+		canvas := canvas
+		wg.Go(func() error {
 			s.log.Debug("rendering board", zap.String("board", b.Name()))
-			if err := b.Render(s.currentBoardCtx, canvas); err != nil {
-				boardErr = err
+			if err := board.Render(ctx, b, canvas); err != nil {
 				s.log.Error("board render returned error",
 					zap.Error(err),
 				)
+				return err
 			}
-		}(canvas)
+			return nil
+		})
 	}
-	done := make(chan struct{})
 
-	go func() {
-		defer close(done)
-		wg.Wait()
-	}()
-
-	s.log.Debug("waiting for canvases to be rendered to")
-	select {
-	case <-ctx.Done():
-		s.log.Error("context canceled waiting for canvases to render")
-		return context.Canceled
-	case <-done:
-	}
-	s.log.Debug("done waiting for canvases")
-
-	return boardErr
+	return wg.Wait()
 }
 
 // Close closes the matrix
@@ -884,17 +866,10 @@ func (s *SportsMatrix) prepOrderedBoards(ctx context.Context, boards []board.Boa
 				)
 				return
 			}
-			boardCanvas, err := thisBoard.ScrollRender(ctx, myBase, s.cfg.CombinedScrollPadding)
+			myCanvas, err := board.GetScroll(ctx, b, myBase)
 			if err != nil {
 				s.log.Error("failed to render between board scroll canvas",
 					zap.Error(err),
-				)
-				return
-			}
-			myCanvas, ok := boardCanvas.(*scrcnvs.ScrollCanvas)
-			if !ok {
-				s.log.Error("unexpected board type in combined scroll",
-					zap.String("board", thisBoard.Name()),
 				)
 				return
 			}

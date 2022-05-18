@@ -21,6 +21,7 @@ import (
 	"github.com/robbydyer/sports/internal/enabler"
 	pb "github.com/robbydyer/sports/internal/proto/imageboard"
 	"github.com/robbydyer/sports/internal/rgbrender"
+	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 	"github.com/robbydyer/sports/internal/twirphelpers"
 	"github.com/robbydyer/sports/internal/util"
 )
@@ -179,27 +180,40 @@ func (i *ImageBoard) ScrollMode() bool {
 	return false
 }
 
-// ScrollRender ...
-func (i *ImageBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padding int) (board.Canvas, error) {
-	return nil, nil
+func (i *ImageBoard) SetScrollMode(b bool) {
+}
+
+func (i *ImageBoard) ScrollDelay() time.Duration {
+	return 50 * time.Millisecond
+}
+
+func (i *ImageBoard) SetScrollDelay(d time.Duration) {
+}
+
+func (i *ImageBoard) ScrollPad() int {
+	return 0
+}
+
+func (i *ImageBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 // Render ...
-func (i *ImageBoard) Render(ctx context.Context, canvas board.Canvas) error {
+func (i *ImageBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	if !i.Enabler().Enabled() {
 		i.log.Warn("ImageBoard is disabled, not rendering")
-		return nil
+		return nil, nil
 	}
 
 	if len(i.config.Directories) < 1 && len(i.config.DirectoryList) < 1 {
-		return fmt.Errorf("image board has no directories configured")
+		return nil, fmt.Errorf("image board has no directories configured")
 	}
 
 	if i.config.UseDiskCache.Load() {
 		if _, err := os.Stat(diskCacheDir); err != nil {
 			if os.IsNotExist(err) {
 				if err := os.MkdirAll(diskCacheDir, 0o755); err != nil {
-					return err
+					return nil, err
 				}
 			}
 		}
@@ -276,7 +290,7 @@ func (i *ImageBoard) Render(ctx context.Context, canvas board.Canvas) error {
 	isJumping := false
 	select {
 	case <-ctx.Done():
-		return context.Canceled
+		return nil, context.Canceled
 	case j := <-i.jumpTo:
 		jump = j
 		isJumping = true
@@ -295,7 +309,7 @@ func (i *ImageBoard) Render(ctx context.Context, canvas board.Canvas) error {
 		i.Enabler().Store(i.priorJumpState.Load())
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (i *ImageBoard) renderGIFs(ctx context.Context, canvas board.Canvas, images []img, jump string) error {

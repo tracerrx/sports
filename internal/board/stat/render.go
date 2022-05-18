@@ -32,6 +32,7 @@ func (s *StatBoard) enablerCancel(ctx context.Context, cancel context.CancelFunc
 	}
 }
 
+/*
 // ScrollRender ...
 func (s *StatBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padding int) (board.Canvas, error) {
 	origScrollMode := s.config.ScrollMode.Load()
@@ -59,9 +60,10 @@ func (s *StatBoard) Render(ctx context.Context, canvas board.Canvas) error {
 
 	return nil
 }
+*/
 
 // Render ...
-func (s *StatBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (s *StatBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	if len(s.config.Players) == 0 && len(s.config.Teams) == 0 {
 		return nil, fmt.Errorf("no players or teams configured for stats %s", s.api.LeagueShortName())
 	}

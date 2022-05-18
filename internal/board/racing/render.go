@@ -16,6 +16,7 @@ import (
 	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 )
 
+/*
 // ScrollRender ...
 func (s *RacingBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padding int) (board.Canvas, error) {
 	origScrollMode := s.config.ScrollMode.Load()
@@ -48,9 +49,10 @@ func (s *RacingBoard) Render(ctx context.Context, canvas board.Canvas) error {
 
 	return nil
 }
+*/
 
 // Render ...
-func (s *RacingBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (s *RacingBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	s.boardCtx, s.boardCancel = context.WithCancel(ctx)
 
 	s.log.Debug("render racing board",
@@ -86,7 +88,7 @@ func (s *RacingBoard) render(ctx context.Context, canvas board.Canvas) (board.Ca
 
 		var err error
 		scrollCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, s.log,
-			scrcnvs.WithMergePadding(s.config.TightScrollPadding),
+			scrcnvs.WithMergePadding(s.config.ScrollPadding),
 		)
 		if err != nil {
 			return nil, err

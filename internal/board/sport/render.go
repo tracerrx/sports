@@ -84,8 +84,6 @@ LOOP:
 }
 
 func (s *SportBoard) renderLiveGame(ctx context.Context, canvas draw.Image, liveGame Game, counter image.Image) error {
-	// s.logCanvas(canvas, "render live canvas size")
-
 	layers, err := rgbrender.NewLayerDrawer(60*time.Second, s.log)
 	if err != nil {
 		return err

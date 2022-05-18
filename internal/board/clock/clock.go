@@ -149,6 +149,27 @@ func (c *Clock) ScrollMode() bool {
 	return c.config.ScrollMode.Load()
 }
 
+func (c *Clock) SetScrollMode(b bool) {
+	c.config.ScrollMode.Store(b)
+}
+
+func (c *Clock) ScrollDelay() time.Duration {
+	return c.config.scrollDelay
+}
+
+func (s *Clock) SetScrollDelay(d time.Duration) {
+	s.config.scrollDelay = d
+}
+
+func (c *Clock) ScrollPad() int {
+	return 0
+}
+
+func (c *Clock) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
+}
+
+/*
 // ScrollRender ...
 func (c *Clock) ScrollRender(ctx context.Context, canvas board.Canvas, padding int) (board.Canvas, error) {
 	origScrollMode := c.config.ScrollMode.Load()
@@ -180,6 +201,7 @@ func (c *Clock) Render(ctx context.Context, canvas board.Canvas) error {
 
 	return nil
 }
+*/
 
 func currentTimeStr() string {
 	ampm := ""
@@ -201,7 +223,7 @@ func currentTimeStr() string {
 }
 
 // Render ...
-func (c *Clock) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (c *Clock) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	if !c.Enabler().Enabled() {
 		return nil, nil
 	}

@@ -97,17 +97,6 @@ func (s *SportsMatrix) startHTTP() chan error {
 		}
 	}
 
-	for _, c := range s.canvases {
-		handlers, err := c.GetHTTPHandlers()
-		if err != nil {
-			errChan <- err
-			return errChan
-		}
-		for _, h := range handlers {
-			register(c.Name(), h)
-		}
-	}
-
 	// Ensure we didn't dupe any endpoints
 	dupe := make(map[string]struct{}, len(s.httpEndpoints))
 	for _, e := range s.httpEndpoints {

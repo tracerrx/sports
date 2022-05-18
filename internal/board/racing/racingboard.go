@@ -44,16 +44,16 @@ type Todayer func() []time.Time
 
 // Config ...
 type Config struct {
-	TodayFunc          Todayer
-	boardDelay         time.Duration
-	scrollDelay        time.Duration
-	StartEnabled       *atomic.Bool `json:"enabled"`
-	BoardDelay         string       `json:"boardDelay"`
-	ScrollMode         *atomic.Bool `json:"scrollMode"`
-	ScrollDelay        string       `json:"scrollDelay"`
-	OnTimes            []string     `json:"onTimes"`
-	OffTimes           []string     `json:"offTimes"`
-	TightScrollPadding int          `json:"tightScrollPadding"`
+	TodayFunc     Todayer
+	boardDelay    time.Duration
+	scrollDelay   time.Duration
+	StartEnabled  *atomic.Bool `json:"enabled"`
+	BoardDelay    string       `json:"boardDelay"`
+	ScrollMode    *atomic.Bool `json:"scrollMode"`
+	ScrollDelay   string       `json:"scrollDelay"`
+	OnTimes       []string     `json:"onTimes"`
+	OffTimes      []string     `json:"offTimes"`
+	ScrollPadding int          `json:"tightScrollPadding" json:"scrollPadding"`
 }
 
 // API ...
@@ -181,6 +181,26 @@ func (s *RacingBoard) InBetween() bool {
 // ScrollMode ...
 func (s *RacingBoard) ScrollMode() bool {
 	return s.config.ScrollMode.Load()
+}
+
+func (s *RacingBoard) SetScrollMode(b bool) {
+	s.config.ScrollMode.Store(b)
+}
+
+func (s *RacingBoard) ScrollDelay() time.Duration {
+	return s.config.scrollDelay
+}
+
+func (s *RacingBoard) SetScrollDelay(d time.Duration) {
+	s.config.scrollDelay = d
+}
+
+func (s *RacingBoard) ScrollPad() int {
+	return s.config.ScrollPadding
+}
+
+func (s *RacingBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 // HasPriority ...

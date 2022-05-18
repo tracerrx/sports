@@ -5,6 +5,9 @@ import (
 	"image"
 	"image/draw"
 	"net/http"
+	"time"
+
+	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 )
 
 // HTTPHandler is the type returned to the sportsmatrix for HTTP endpoints
@@ -25,13 +28,18 @@ type Enabler interface {
 // Board is the interface to implement for displaying on the matrix
 type Board interface {
 	Name() string
-	Render(ctx context.Context, canvases Canvas) error
-	ScrollRender(ctx context.Context, canvas Canvas, padding int) (Canvas, error)
+	Render(ctx context.Context, canvas Canvas) (Canvas, error)
+	// ScrollRender(ctx context.Context, canvas Canvas, padding int) (Canvas, error)
 	GetHTTPHandlers() ([]*HTTPHandler, error)
 	ScrollMode() bool
+	SetScrollMode(bool)
 	GetRPCHandler() (string, http.Handler)
 	InBetween() bool
 	Enabler() Enabler
+	SetScrollDelay(time.Duration)
+	ScrollDelay() time.Duration
+	ScrollDirection() scrcnvs.ScrollDirection
+	ScrollPad() int
 }
 
 // Canvas ...
@@ -42,7 +50,6 @@ type Canvas interface {
 	Name() string
 	Clear() error
 	Render(ctx context.Context) error
-	GetHTTPHandlers() ([]*HTTPHandler, error)
 	Close() error
 	Scrollable() bool
 	AlwaysRender() bool

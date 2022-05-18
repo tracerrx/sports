@@ -8,7 +8,6 @@ import (
 
 	"go.uber.org/atomic"
 
-	"github.com/robbydyer/sports/internal/board"
 	"github.com/robbydyer/sports/internal/matrix"
 )
 
@@ -121,9 +120,4 @@ func (c *Canvas) Store(s bool) bool {
 
 func (c *Canvas) SetStateChangeCallback(s func()) {
 	c.stateChangeCallback = s
-}
-
-// GetHTTPHandlers ...
-func (c *Canvas) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
-	return nil, nil
 }

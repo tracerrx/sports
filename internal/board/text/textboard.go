@@ -43,19 +43,19 @@ type TextBoard struct {
 
 // Config for a TextBoard
 type Config struct {
-	boardDelay         time.Duration
-	updateInterval     time.Duration
-	scrollDelay        time.Duration
-	halfSizeLogo       bool
-	StartEnabled       *atomic.Bool `json:"enabled"`
-	BoardDelay         string       `json:"boardDelay"`
-	UpdateInterval     string       `json:"updateInterval"`
-	TightScrollPadding int          `json:"tightScrollPadding"`
-	ScrollDelay        string       `json:"scrollDelay"`
-	OnTimes            []string     `json:"onTimes"`
-	OffTimes           []string     `json:"offTimes"`
-	UseLogos           *atomic.Bool `json:"useLogos"`
-	Max                *int         `json:"max"`
+	boardDelay     time.Duration
+	updateInterval time.Duration
+	scrollDelay    time.Duration
+	halfSizeLogo   bool
+	StartEnabled   *atomic.Bool `json:"enabled"`
+	BoardDelay     string       `json:"boardDelay"`
+	UpdateInterval string       `json:"updateInterval"`
+	ScrollPadding  int          `json:"tightScrollPadding" json:"scrollPadding"`
+	ScrollDelay    string       `json:"scrollDelay"`
+	OnTimes        []string     `json:"onTimes"`
+	OffTimes       []string     `json:"offTimes"`
+	UseLogos       *atomic.Bool `json:"useLogos"`
+	Max            *int         `json:"max"`
 }
 
 // OptionFunc ...
@@ -200,6 +200,7 @@ func (s *TextBoard) enablerCancel(ctx context.Context, cancel context.CancelFunc
 	}
 }
 
+/*
 // Render ...
 func (s *TextBoard) Render(ctx context.Context, canvas board.Canvas) error {
 	c, err := s.render(ctx, canvas)
@@ -229,9 +230,10 @@ func (s *TextBoard) ScrollRender(ctx context.Context, canvas board.Canvas, paddi
 
 	return s.render(ctx, canvas)
 }
+*/
 
 // Render ...
-func (s *TextBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (s *TextBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	if !canvas.Scrollable() || !s.Enabler().Enabled() {
 		return nil, nil
 	}
@@ -279,7 +281,7 @@ func (s *TextBoard) render(ctx context.Context, canvas board.Canvas) (board.Canv
 	}
 
 	scrollCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, s.log,
-		scrcnvs.WithMergePadding(s.config.TightScrollPadding),
+		scrcnvs.WithMergePadding(s.config.ScrollPadding),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tight scroll canvas: %w", err)
@@ -355,6 +357,25 @@ func (s *TextBoard) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
 // ScrollMode ...
 func (s *TextBoard) ScrollMode() bool {
 	return true
+}
+
+func (s *TextBoard) SetScrollMode(b bool) {
+}
+
+func (s *TextBoard) ScrollDelay() time.Duration {
+	return s.config.scrollDelay
+}
+
+func (s *TextBoard) SetScrollDelay(d time.Duration) {
+	s.config.scrollDelay = d
+}
+
+func (s *TextBoard) ScrollPad() int {
+	return s.config.ScrollPadding
+}
+
+func (s *TextBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 // WithHalfSizeLogo option to shrink headline logo by half

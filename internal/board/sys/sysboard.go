@@ -23,6 +23,7 @@ import (
 	"github.com/robbydyer/sports/internal/enabler"
 	pb "github.com/robbydyer/sports/internal/proto/basicboard"
 	"github.com/robbydyer/sports/internal/rgbrender"
+	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 	"github.com/robbydyer/sports/internal/twirphelpers"
 	"github.com/robbydyer/sports/internal/util"
 )
@@ -142,31 +143,31 @@ func (s *SysBoard) ScrollRender(ctx context.Context, canvas board.Canvas, paddin
 }
 
 // Render ...
-func (s *SysBoard) Render(ctx context.Context, canvas board.Canvas) error {
+func (s *SysBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	if !s.Enabler().Enabled() {
-		return nil
+		return nil, nil
 	}
 
 	writer, err := s.textWriter(canvas.Bounds().Dx())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	mem, err := memory.Get()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	memPct := int64(float64(mem.Used) / float64(mem.Total) * 100)
 
 	before, err := cpu.Get()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	time.Sleep(1 * time.Second)
 	after, err := cpu.Get()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cpuPct := int64(float64(after.User-before.User) / float64(after.Total-before.Total) * 100)
@@ -200,11 +201,11 @@ func (s *SysBoard) Render(ctx context.Context, canvas board.Canvas) error {
 		things,
 		color.White,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := canvas.Render(ctx); err != nil {
-		return err
+		return nil, err
 	}
 
 	select {
@@ -212,7 +213,7 @@ func (s *SysBoard) Render(ctx context.Context, canvas board.Canvas) error {
 	case <-time.After(s.config.boardDelay):
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (s *SysBoard) Enabler() board.Enabler {
@@ -222,6 +223,24 @@ func (s *SysBoard) Enabler() board.Enabler {
 // ScrollMode ...
 func (s *SysBoard) ScrollMode() bool {
 	return false
+}
+
+func (s *SysBoard) SetScrollMode(b bool) {
+}
+
+func (s *SysBoard) ScrollDelay() time.Duration {
+	return 50 * time.Millisecond
+}
+
+func (s *SysBoard) SetScrollDelay(d time.Duration) {
+}
+
+func (s *SysBoard) ScrollPad() int {
+	return 0
+}
+
+func (s *SysBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 // GetHTTPHandlers ...

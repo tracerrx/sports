@@ -19,6 +19,7 @@ import (
 	"github.com/robbydyer/sports/internal/enabler"
 	pb "github.com/robbydyer/sports/internal/proto/basicboard"
 	"github.com/robbydyer/sports/internal/rgbrender"
+	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 	"github.com/robbydyer/sports/internal/twirphelpers"
 	"github.com/robbydyer/sports/internal/util"
 )
@@ -252,6 +253,26 @@ func (s *StatBoard) Close() error {
 // ScrollMode ...
 func (s *StatBoard) ScrollMode() bool {
 	return s.config.ScrollMode.Load()
+}
+
+func (s *StatBoard) SetScrollMode(b bool) {
+	s.config.ScrollMode.Store(b)
+}
+
+func (s *StatBoard) ScrollDelay() time.Duration {
+	return s.config.scrollDelay
+}
+
+func (s *StatBoard) SetScrollDelay(d time.Duration) {
+	s.config.scrollDelay = d
+}
+
+func (s *StatBoard) ScrollPad() int {
+	return 0
+}
+
+func (s *StatBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 // WithSorter ...

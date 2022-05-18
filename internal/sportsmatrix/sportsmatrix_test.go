@@ -15,6 +15,7 @@ import (
 
 	"github.com/robbydyer/sports/internal/board"
 	"github.com/robbydyer/sports/internal/enabler"
+	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 )
 
 type TestBoard struct {
@@ -40,14 +41,14 @@ func (b *TestBoard) ScrollRender(ctx context.Context, canvas board.Canvas, pad i
 	return nil, nil
 }
 
-func (b *TestBoard) Render(ctx context.Context, canvases board.Canvas) error {
+func (b *TestBoard) Render(ctx context.Context, canvases board.Canvas) (board.Canvas, error) {
 	defer b.log.Info("TestBoard done rendering")
 	if b.tester != nil {
 		b.log.Info("rendering blank board for test")
 		require.Nil(b.tester, nil, "Blank Board render in test")
 		b.hasRendered.Store(true)
 	}
-	return nil
+	return nil, nil
 }
 
 func (b *TestBoard) GetHTTPHandlers() ([]*board.HTTPHandler, error) {
@@ -67,6 +68,24 @@ func (b *TestBoard) ScrollMode() bool {
 }
 
 func (b *TestBoard) SetStateChangeNotifier(st board.StateChangeNotifier) {
+}
+
+func (b *TestBoard) SetScrollMode(v bool) {
+}
+
+func (b *TestBoard) ScrollDelay() time.Duration {
+	return 1 * time.Microsecond
+}
+
+func (b *TestBoard) SetScrollDelay(d time.Duration) {
+}
+
+func (b *TestBoard) ScrollPad() int {
+	return 0
+}
+
+func (b *TestBoard) ScrollDirection() scrcnvs.ScrollDirection {
+	return scrcnvs.RightToLeft
 }
 
 func TestSportsMatrix(t *testing.T) {

@@ -16,6 +16,7 @@ import (
 	scrcnvs "github.com/robbydyer/sports/internal/scrollcanvas"
 )
 
+/*
 // ScrollRender ...
 func (s *CalendarBoard) ScrollRender(ctx context.Context, canvas board.Canvas, padding int) (board.Canvas, error) {
 	origScrollMode := s.config.ScrollMode.Load()
@@ -48,9 +49,10 @@ func (s *CalendarBoard) Render(ctx context.Context, canvas board.Canvas) error {
 
 	return nil
 }
+*/
 
 // Render ...
-func (s *CalendarBoard) render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
+func (s *CalendarBoard) Render(ctx context.Context, canvas board.Canvas) (board.Canvas, error) {
 	s.boardCtx, s.boardCancel = context.WithCancel(ctx)
 
 	events, err := s.api.DailyEvents(ctx, time.Now())
@@ -88,7 +90,7 @@ func (s *CalendarBoard) render(ctx context.Context, canvas board.Canvas) (board.
 
 		var err error
 		scrollCanvas, err = scrcnvs.NewScrollCanvas(base.Matrix, s.log,
-			scrcnvs.WithMergePadding(s.config.TightScrollPadding),
+			scrcnvs.WithMergePadding(s.config.ScrollPadding),
 		)
 		if err != nil {
 			return nil, err
