@@ -698,10 +698,6 @@ GAMES:
 			)
 			scrollCanvas.AddCanvas(img)
 
-			if gameIndex == len(games)-1 {
-				return scrollCanvas, nil
-			}
-
 			continue GAMES
 		}
 
